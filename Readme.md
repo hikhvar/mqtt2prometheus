@@ -2,7 +2,7 @@
 This exporter is an analog to the [Prometheus Pushgateway](https://github.com/prometheus/pushgateway). Clients can push 
 metrics via MQTT to an MQTT Broker. This exporter subscribes to the broker and
 publish the received messages as prometheus metrics. I wrote this exporter to publish
-metrics from small embedded sensors based on the NodeMCU to prometheus. 
+metrics from small embedded sensors based on the NodeMCU to prometheus. The used arduino scetch can be found in the [dht22tomqtt](https://github.com/hikhvar/dht22tomqtt) repository.
 
 ## Assumptions about Messages and Topics
 This exporter makes some assumptions about the message format and MQTT topics. This exporter assumes that each

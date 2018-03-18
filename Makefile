@@ -23,7 +23,7 @@ Gopkg.toml: | install-dep
 prepare-vendor: Gopkg.toml Gopkg.lock
 	dep ensure -update --no-vendor
 	dep status
-	@echo "You can apply these locks via 'make apply-vendor-lock' or rollback via 'git checkout -- Gopkg.lock'"
+	@echo "You can apply these locks via 'make vendor' or rollback via 'git checkout -- Gopkg.lock'"
 
 vendor: Gopkg.toml Gopkg.lock
 	dep ensure -vendor-only

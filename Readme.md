@@ -16,7 +16,7 @@ type MQTTPayload map[string]float64
 For example the message
 
 ```json
-"temperature":23.20,"humidity":51.60,"heat_index":22.92}
+{"temperature":23.20,"humidity":51.60,"heat_index":22.92}
 ```
 
 published to the MQTT topic `devices/me/livingroom` becomes the following prometheus metrics:

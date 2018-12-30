@@ -1,0 +1,14 @@
+language: go
+
+go:
+  - 1.10.x
+
+before_install:
+  - set -e
+
+script: |
+  GOOS=linux GOARCH=amd64 make build
+  for version in 5 6 7; do 
+    GOOS=linux GOARCH=arm GOARM=${version} make build
+  done
+

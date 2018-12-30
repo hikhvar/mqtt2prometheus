@@ -1,3 +1,10 @@
+ifndef GOPATH
+  GOPATH:=$(shell go env GOPATH)
+endif
+
+ifndef GOBIN
+  GOBIN:=$(GOPATH)/bin
+endif
 
 ifndef GOARCH
   GOARCH:=$(shell go env GOARCH)
@@ -7,27 +14,33 @@ ifndef GOOS
   GOOS:=$(shell go env GOOS)
 endif
 
-ifndef TARGET_FILE
-  TARGET_FILE:=bin/mqtt2prometheus.$(GOOS)_$(GOARCH)
+ifndef GOARM
+  GOARM:=$(shell go env GOARM)
 endif
 
+ifndef TARGET_FILE
+  TARGET_FILE:=bin/mqtt2prometheus.$(GOOS)_$(GOARCH)$(GOARM)
+endif
+
+all: build
+
 install-dep:
-	@which dep || go get -u github.com/golang/dep/cmd/dep
+	@which $(GOBIN)/dep || go get -u github.com/golang/dep/cmd/dep
 
 Gopkg.lock: | install-dep
-	dep ensure --no-vendor
+	$(GOBIN)/dep ensure --no-vendor
 
 Gopkg.toml: | install-dep
-	dep init
+	$(GOBIN)/dep init
 
 prepare-vendor: Gopkg.toml Gopkg.lock
-	dep ensure -update --no-vendor
-	dep status
+	$(GOBIN)/dep ensure -update --no-vendor
+	$(GOBIN)/dep status
 	@echo "You can apply these locks via 'make vendor' or rollback via 'git checkout -- Gopkg.lock'"
 
-vendor: Gopkg.toml Gopkg.lock
-	dep ensure -vendor-only
-	dep status
+vendor: install-dep Gopkg.toml Gopkg.lock
+	$(GOBIN)/dep ensure -vendor-only
+	$(GOBIN)/dep status
 
 test:
 	go test ./...

@@ -12,3 +12,22 @@ script: |
     GOOS=linux GOARCH=arm GOARM=${version} make build
   done
 
+after_success:
+  - |
+    if [[ "${TRAVIS_PULL_REQUEST?}" == "false" ]] && [[ -n "${TRAVIS_TAG?}"  ]]; then
+      go get github.com/itchio/gothub # install release cli
+      projectMeta="--user hikhvar --repo mqtt2prometheus --tag ${TRAVIS_TAG}"
+      gothub release \
+        ${projectMeta} \
+        --name "Version ${TRAVIS_TAG}" \
+        --description "Automatic binary release of the git tag ${TRAVIS_TAG}" \
+        --pre-release
+
+      for srcFile in $(find bin/ -type f); do
+        gothub upload \
+          ${projectMeta} \
+          --name ${srcFile#bin/} \
+          --file ${srcFile} 
+      done
+
+    fi

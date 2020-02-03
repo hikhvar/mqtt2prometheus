@@ -1,13 +1,10 @@
 package metrics
 
 import (
-	"errors"
-
+	"fmt"
 	"path/filepath"
 
 	"encoding/json"
-
-	"fmt"
 
 	"log"
 
@@ -15,8 +12,6 @@ import (
 	"github.com/hikhvar/mqtt2prometheus/pkg/config"
 	"github.com/prometheus/client_golang/prometheus"
 )
-
-var NoValidPayload = errors.New("no valid MQTT payload")
 
 type Ingest struct {
 	validMetrics  map[string]config.MetricConfig
@@ -42,15 +37,21 @@ func NewIngest(collector Collector, metrics []config.MetricConfig) *Ingest {
 	}
 }
 
-type MQTTPayload map[string]float64
+type MQTTPayload map[string]interface{}
 
 func (i *Ingest) store(deviceID string, rawMetrics MQTTPayload) error {
 	var mc MetricCollection
 	for metricName, value := range rawMetrics {
 		if cfg, found := i.validMetrics[metricName]; found {
+
+			floatValue, ok := value.(float64)
+			if !ok {
+				return fmt.Errorf("got data with unexpectd type: %T ('%s')  but wanted float64", value, value)
+			}
+
 			mc = append(mc, Metric{
 				Description: cfg.PrometheusDescription(),
-				Value:       value,
+				Value:       floatValue,
 				ValueType:   cfg.PrometheusValueType(),
 			})
 		}
@@ -68,11 +69,13 @@ func (i *Ingest) SetupSubscriptionHandler(errChan chan<- error) mqtt.MessageHand
 		if err != nil {
 			errChan <- fmt.Errorf("could not decode message '%s' on topic %s: %s", string(m.Payload()), m.Topic(), err.Error())
 			i.MessageMetric.WithLabelValues("decodeError", m.Topic()).Desc()
+			return
 		}
 		err = i.store(deviceId, rawMetrics)
 		if err != nil {
 			errChan <- fmt.Errorf("could not store metrics '%s' on topic %s: %s", string(m.Payload()), m.Topic(), err.Error())
 			i.MessageMetric.WithLabelValues("storeError", m.Topic()).Inc()
+			return
 		}
 		i.MessageMetric.WithLabelValues("success", m.Topic()).Inc()
 	}

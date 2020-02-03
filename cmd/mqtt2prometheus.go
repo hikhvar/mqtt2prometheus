@@ -3,21 +3,15 @@ package main
 import (
 	"log"
 	"net/http"
-
 	"os"
-
 	"time"
-
 	"flag"
-
 	"github.com/eclipse/paho.mqtt.golang"
 	"github.com/hikhvar/mqtt2prometheus/pkg/metrics"
 	"github.com/hikhvar/mqtt2prometheus/pkg/mqttclient"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-
 	"fmt"
-
 	"github.com/hikhvar/mqtt2prometheus/pkg/config"
 )
 
@@ -52,10 +46,14 @@ func main() {
 	}
 	mqttClientOptions := mqtt.NewClientOptions()
 	mqttClientOptions.AddBroker(cfg.MQTT.Server).SetClientID(hostName).SetCleanSession(true)
+	mqttClientOptions.SetUsername(cfg.MQTT.User)
+	mqttClientOptions.SetPassword(cfg.MQTT.Password)
+
 	collector := metrics.NewCollector(2*time.Minute, cfg.Metrics)
 	ingest := metrics.NewIngest(collector, cfg.Metrics)
 
-	var errorChan chan error
+	errorChan := make(chan error,1)
+
 	err = mqttclient.Subscribe(mqttClientOptions, mqttclient.SubscribeOptions{
 		Topic:             cfg.MQTT.TopicPath + "/+",
 		QoS:               cfg.MQTT.QoS,
@@ -73,6 +71,7 @@ func main() {
 			log.Fatalf("Error while serving http: %s", err.Error())
 		}
 	}()
+
 	for {
 		select {
 		case <-c:

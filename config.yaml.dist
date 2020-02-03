@@ -2,6 +2,9 @@
 mqtt:
   # The MQTT broker to connect to
   server: tcp://127.0.0.1:1883
+  # Optional: Username and Password for authenticating with the MQTT Server
+  # user: bob
+  # password: happylittleclouds
   # The Topic path to subscripe to. Actually this will become `$topic_path/+`
   topic_path: v1/devices/me
   # The MQTT QoS level

@@ -35,6 +35,8 @@ type CacheConfig struct {
 type MQTTConfig struct {
 	Server    string `yaml:"server"`
 	TopicPath string `yaml:"topic_path"`
+	User      string `yaml:"user"`
+	Password  string `yaml:"password"`
 	QoS       byte   `yaml:"qos"`
 }
 

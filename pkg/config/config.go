@@ -2,7 +2,6 @@ package config
 
 import (
 	"time"
-        "log"
 	"io/ioutil"
 	"github.com/prometheus/client_golang/prometheus"
 	"gopkg.in/yaml.v2"
@@ -18,7 +17,7 @@ var MQTTConfigDefaults = MQTTConfig{
 }
 
 var CacheConfigDefaults = CacheConfig{
-	Timeout: 1,
+	Timeout: 2,
 }
 
 type Config struct {

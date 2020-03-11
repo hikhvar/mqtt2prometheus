@@ -1,12 +1,12 @@
 package metrics
 
 import (
-	"fmt"
-	"path/filepath"
-
 	"encoding/json"
-
+	"fmt"
 	"log"
+	"path/filepath"
+	"regexp"
+	"strconv"
 
 	"github.com/eclipse/paho.mqtt.golang"
 	"github.com/hikhvar/mqtt2prometheus/pkg/config"
@@ -18,6 +18,8 @@ type Ingest struct {
 	collector     Collector
 	MessageMetric *prometheus.CounterVec
 }
+
+var validNumber = regexp.MustCompile(`^[0-9.]+$`)
 
 func NewIngest(collector Collector, metrics []config.MetricConfig) *Ingest {
 	valid := make(map[string]config.MetricConfig)
@@ -41,12 +43,24 @@ type MQTTPayload map[string]interface{}
 
 func (i *Ingest) store(deviceID string, rawMetrics MQTTPayload) error {
 	var mc MetricCollection
+
 	for metricName, value := range rawMetrics {
 		if cfg, found := i.validMetrics[metricName]; found {
+			var floatValue float64
+			var isFloat bool
+			var err error
+			floatValue, isFloat = value.(float64)
+			if !isFloat {
+				stringValue, isString := value.(string)
 
-			floatValue, ok := value.(float64)
-			if !ok {
-				return fmt.Errorf("got data with unexpectd type: %T ('%s')  but wanted float64", value, value)
+				if !isString || ! validNumber.MatchString(stringValue) {
+					return fmt.Errorf("got data with unexpectd type: %T ('%s')", value, value)
+				}
+
+				floatValue, err = strconv.ParseFloat(stringValue, 64)
+				if err != nil {
+					return fmt.Errorf("got data with unexpectd type: %T ('%s') and failed to parse to float", value, value)
+				}
 			}
 
 			mc = append(mc, Metric{

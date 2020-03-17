@@ -17,7 +17,7 @@ var MQTTConfigDefaults = MQTTConfig{
 }
 
 var CacheConfigDefaults = CacheConfig{
-	Timeout: 2 + time.Minute,
+	Timeout: 2 * time.Minute,
 }
 
 type Config struct {

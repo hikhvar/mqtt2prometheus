@@ -1,7 +1,7 @@
-FROM golang:1.10 as builder
+FROM golang:1.14.2 as builder
 
-COPY . /go/src/github.com/hikhvar/mqtt2prometheus
-WORKDIR /go/src/github.com/hikhvar/mqtt2prometheus
+COPY . /build/mqtt2prometheus
+WORKDIR /build/mqtt2prometheus
 RUN make static_build TARGET_FILE=/bin/mqtt2prometheus
 
 FROM scratch

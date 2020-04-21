@@ -24,31 +24,17 @@ endif
 
 all: build
 
-install-dep:
-	@which $(GOBIN)/dep || go get -u github.com/golang/dep/cmd/dep
+GO111MODULE=on
 
-Gopkg.lock: | install-dep
-	$(GOBIN)/dep ensure --no-vendor
-
-Gopkg.toml: | install-dep
-	$(GOBIN)/dep init
-
-prepare-vendor: Gopkg.toml Gopkg.lock
-	$(GOBIN)/dep ensure -update --no-vendor
-	$(GOBIN)/dep status
-	@echo "You can apply these locks via 'make vendor' or rollback via 'git checkout -- Gopkg.lock'"
-
-vendor: install-dep Gopkg.toml Gopkg.lock
-	$(GOBIN)/dep ensure -vendor-only
-	$(GOBIN)/dep status
 
 test:
 	go test ./...
+	go vet ./...
 
-build: vendor
+build:
 	GOOS=$(GOOS) GOARCH=$(GOARCH) go build -o $(TARGET_FILE) ./cmd
 
-static_build: vendor
+static_build:
 	CGO_ENABLED=0 GOOS=$(GOOS) GOARCH=$(GOARCH) go build -o $(TARGET_FILE) -a -tags netgo -ldflags '-w -extldflags "-static"' ./cmd
 
 container:

@@ -30,8 +30,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       # Release docker file
       - name: Build the Docker image
-        run: docker build -t docker.pkg.github.com/hikhvar/mqtt2prometheus/mqtt2prometheus:latest -t docker.pkg.github.com/hikhvar/mqtt2prometheus/mqtt2prometheus:${{ github.ref }} .
+        run: docker build -t docker.pkg.github.com/hikhvar/mqtt2prometheus/mqtt2prometheus:latest -t docker.pkg.github.com/hikhvar/mqtt2prometheus/mqtt2prometheus:${GITHUB_REF##*/} .
       - name: Login to Github
         run: echo ${{ secrets.GITHUB_TOKEN }} | docker login docker.pkg.github.com -u ${{ github.actor }} --password-stdin
       - name: Publish image        
-        run: docker push docker.pkg.github.com/hikhvar/mqtt2prometheus:latest docker.pkg.github.com/hikhvar/mqtt2prometheus:${{ github.ref }} 
+        run: docker push docker.pkg.github.com/hikhvar/mqtt2prometheus:latest docker.pkg.github.com/hikhvar/mqtt2prometheus:${GITHUB_REF##*/} 

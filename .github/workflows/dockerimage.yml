@@ -1,17 +1,13 @@
-name: Docker Image CI
+name: docker
 
 on:
-  push:
-    branches: ["master"]
   pull_request:
 
 jobs:
 
   build:
-
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v2
     - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
+      run: docker build . --file Dockerfile --tag mqtt2prometheus:${GITHUB_REF##*/}

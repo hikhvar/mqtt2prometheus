@@ -1,4 +1,5 @@
 # MQTT2Prometheus
+![](https://github.com/hikhvar/mqtt2prometheus/workflows/tests/badge.svg) ![](https://github.com/hikhvar/mqtt2prometheus/workflows/release/badge.svg)
 This exporter is an analog to the [Prometheus Pushgateway](https://github.com/prometheus/pushgateway). Clients can push 
 metrics via MQTT to an MQTT Broker. This exporter subscribes to the broker and
 publish the received messages as prometheus metrics. I wrote this exporter to publish

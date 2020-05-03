@@ -1,8 +1,9 @@
 package config
 
 import (
-	"time"
 	"io/ioutil"
+	"time"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"gopkg.in/yaml.v2"
 )
@@ -40,11 +41,19 @@ type MQTTConfig struct {
 
 // Metrics Config is a mapping between a metric send on mqtt to a prometheus metric
 type MetricConfig struct {
-	PrometheusName string            `yaml:"prom_name"`
-	MQTTName       string            `yaml:"mqtt_name"`
-	Help           string            `yaml:"help"`
-	ValueType      string            `yaml:"type"`
-	ConstantLabels map[string]string `yaml:"const_labels"`
+	PrometheusName     string                    `yaml:"prom_name"`
+	MQTTName           string                    `yaml:"mqtt_name"`
+	Help               string                    `yaml:"help"`
+	ValueType          string                    `yaml:"type"`
+	ConstantLabels     map[string]string         `yaml:"const_labels"`
+	StringValueMapping *StringValueMappingConfig `yaml:"string_value_mapping"`
+}
+
+// StringValueMappingConfig defines the mapping from string to float
+type StringValueMappingConfig struct {
+	// ErrorValue is used when no mapping is found in Map
+	ErrorValue *float64           `yaml:"error_value"`
+	Map        map[string]float64 `yaml:"map"`
 }
 
 func (mc *MetricConfig) PrometheusDescription() *prometheus.Desc {

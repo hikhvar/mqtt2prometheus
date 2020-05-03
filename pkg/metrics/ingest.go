@@ -45,30 +45,55 @@ func (i *Ingest) store(deviceID string, rawMetrics MQTTPayload) error {
 	var mc MetricCollection
 
 	for metricName, value := range rawMetrics {
-		if cfg, found := i.validMetrics[metricName]; found {
-			var floatValue float64
-			var isFloat bool
-			var err error
-			floatValue, isFloat = value.(float64)
-			if !isFloat {
-				stringValue, isString := value.(string)
+		cfg, cfgFound := i.validMetrics[metricName]
+		if !cfgFound {
+			continue
+		}
 
-				if !isString || ! validNumber.MatchString(stringValue) {
-					return fmt.Errorf("got data with unexpectd type: %T ('%s')", value, value)
+		var metricValue float64
+
+		if boolValue, ok := value.(bool); ok {
+			if boolValue {
+				metricValue = 1
+			} else {
+				metricValue = 0
+			}
+		} else if strValue, ok := value.(string); ok {
+
+			// If string value mapping is defined, use that
+			if cfg.StringValueMapping != nil {
+
+				floatValue, ok := cfg.StringValueMapping.Map[strValue]
+				if ok {
+					metricValue = floatValue
+				} else if cfg.StringValueMapping.ErrorValue != nil {
+					metricValue = *cfg.StringValueMapping.ErrorValue
+				} else {
+					return fmt.Errorf("got unexpected string data '%s'", strValue)
 				}
 
-				floatValue, err = strconv.ParseFloat(stringValue, 64)
+			} else {
+
+				// otherwise try to parse float
+				floatValue, err := strconv.ParseFloat(strValue, 64)
 				if err != nil {
 					return fmt.Errorf("got data with unexpectd type: %T ('%s') and failed to parse to float", value, value)
 				}
+				metricValue = floatValue
+
 			}
 
-			mc = append(mc, Metric{
-				Description: cfg.PrometheusDescription(),
-				Value:       floatValue,
-				ValueType:   cfg.PrometheusValueType(),
-			})
+		} else if floatValue, ok := value.(float64); ok {
+			metricValue = floatValue
+		} else {
+			return fmt.Errorf("got data with unexpectd type: %T ('%s')", value, value)
 		}
+
+		mc = append(mc, Metric{
+			Description: cfg.PrometheusDescription(),
+			Value:       metricValue,
+			ValueType:   cfg.PrometheusValueType(),
+		})
 	}
 	i.collector.Observe(deviceID, mc)
 	return nil

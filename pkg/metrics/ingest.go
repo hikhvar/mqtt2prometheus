@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"path/filepath"
-	"regexp"
 	"strconv"
 
 	"github.com/eclipse/paho.mqtt.golang"
@@ -18,8 +17,6 @@ type Ingest struct {
 	collector     Collector
 	MessageMetric *prometheus.CounterVec
 }
-
-var validNumber = regexp.MustCompile(`^[0-9.]+$`)
 
 func NewIngest(collector Collector, metrics []config.MetricConfig) *Ingest {
 	valid := make(map[string]config.MetricConfig)

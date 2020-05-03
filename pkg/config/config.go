@@ -49,7 +49,7 @@ type MetricConfig struct {
 	StringValueMapping *StringValueMappingConfig `yaml:"string_value_mapping"`
 }
 
-// StringValueMappingConfig defines the mapping between from string to float
+// StringValueMappingConfig defines the mapping from string to float
 type StringValueMappingConfig struct {
 	// ErrorValue is used when no mapping is found in Map
 	ErrorValue *float64           `yaml:"error_value"`

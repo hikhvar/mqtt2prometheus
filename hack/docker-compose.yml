@@ -1,0 +1,23 @@
+version: "3.8"
+services:
+  mqtt2prometheus:
+    build:
+      context: ../
+      dockerfile: Dockerfile
+    volumes:
+      - type: bind
+        source: ./mqtt2prometheus.yaml
+        target: /config.yaml
+  mosquitto:
+    image: eclipse-mosquitto:1.6.9
+    ports:
+    - 1883:1883
+    - 9001:9001
+  prometheus:
+    image: prom/prometheus:v2.18.1
+    ports:
+    - 9090:9090
+    volumes:
+      - type: bind
+        source: ./prometheus.yml
+        target: /etc/prometheus/prometheus.yml

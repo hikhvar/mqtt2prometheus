@@ -2,6 +2,7 @@ package config
 
 import (
 	"io/ioutil"
+	"regexp"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -19,6 +20,33 @@ var MQTTConfigDefaults = MQTTConfig{
 
 var CacheConfigDefaults = CacheConfig{
 	Timeout: 2 * time.Minute,
+}
+
+type RegexpFilter struct {
+	r       *regexp.Regexp
+	pattern string
+}
+
+func (rf *RegexpFilter) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var pattern string
+	if err := unmarshal(&pattern); err != nil {
+		return err
+	}
+	r, err := regexp.Compile(pattern)
+	if err != nil {
+		return err
+	}
+	rf.r = r
+	rf.pattern = pattern
+	return nil
+}
+
+func (rf *RegexpFilter) MarshalYAML() (interface{}, error) {
+	return rf.pattern, nil
+}
+
+func (rf *RegexpFilter) Match(s string) bool {
+	return rf.r == nil || rf.r.MatchString(s)
 }
 
 type Config struct {
@@ -43,6 +71,7 @@ type MQTTConfig struct {
 type MetricConfig struct {
 	PrometheusName     string                    `yaml:"prom_name"`
 	MQTTName           string                    `yaml:"mqtt_name"`
+	SensorNameFilter   RegexpFilter              `yaml:"sensor_name_filter"`
 	Help               string                    `yaml:"help"`
 	ValueType          string                    `yaml:"type"`
 	ConstantLabels     map[string]string         `yaml:"const_labels"`

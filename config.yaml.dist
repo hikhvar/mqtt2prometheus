@@ -47,9 +47,12 @@ metrics:
     # A map of string to string for constant labels. This labels will be attached to every prometheus metric
     const_labels:
       sensor_type: dht22
+    # The name of the metric in prometheus
   - prom_name: state
     # The name of the metric in a MQTT JSON message
     mqtt_name: state
+    # Regular expression to only match sensors with the given name pattern
+    sensor_name_filter: "^.*-light$"
     # The prometheus help text for this metric
     help: Light state
     # The prometheus type for this metric. Valid values are: "gauge" and "counter"

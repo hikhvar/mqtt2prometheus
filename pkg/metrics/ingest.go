@@ -13,20 +13,20 @@ import (
 )
 
 type Ingest struct {
-	validMetrics  map[string]config.MetricConfig
+	metricConfigs map[string][]config.MetricConfig
 	collector     Collector
 	MessageMetric *prometheus.CounterVec
 }
 
 func NewIngest(collector Collector, metrics []config.MetricConfig) *Ingest {
-	valid := make(map[string]config.MetricConfig)
+	cfgs := make(map[string][]config.MetricConfig)
 	for i := range metrics {
 		key := metrics[i].MQTTName
-		valid[key] = metrics[i]
+		cfgs[key] = append(cfgs[key], metrics[i])
 	}
 	return &Ingest{
-		validMetrics: valid,
-		collector:    collector,
+		metricConfigs: cfgs,
+		collector:     collector,
 		MessageMetric: prometheus.NewCounterVec(
 			prometheus.CounterOpts{
 				Name: "received_messages",
@@ -36,13 +36,24 @@ func NewIngest(collector Collector, metrics []config.MetricConfig) *Ingest {
 	}
 }
 
+// validMetric returns config matching the metric and deviceID
+// Second return value indicates if config was found.
+func (i *Ingest) validMetric(metric string, deviceID string) (config.MetricConfig, bool) {
+	for _, c := range i.metricConfigs[metric] {
+		if c.SensorNameFilter.Match(deviceID) {
+			return c, true
+		}
+	}
+	return config.MetricConfig{}, false
+}
+
 type MQTTPayload map[string]interface{}
 
 func (i *Ingest) store(deviceID string, rawMetrics MQTTPayload) error {
 	var mc MetricCollection
 
 	for metricName, value := range rawMetrics {
-		cfg, cfgFound := i.validMetrics[metricName]
+		cfg, cfgFound := i.validMetric(metricName, deviceID)
 		if !cfgFound {
 			continue
 		}

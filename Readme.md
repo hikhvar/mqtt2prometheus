@@ -1,6 +1,8 @@
 # MQTT2Prometheus
 ![](https://github.com/hikhvar/mqtt2prometheus/workflows/tests/badge.svg) ![](https://github.com/hikhvar/mqtt2prometheus/workflows/release/badge.svg)
-This exporter is an analog to the [Prometheus Pushgateway](https://github.com/prometheus/pushgateway). Clients can push 
+This exporter translates from MQTT topics to prometheus metrics. The core design is that clients send arbitrary JSON messages
+ on the topics. The translation is programmed into the mqtt2prometheus since we often can not change the IoT devices sending 
+ the messages. Clients can push 
 metrics via MQTT to an MQTT Broker. This exporter subscribes to the broker and
 publish the received messages as prometheus metrics. I wrote this exporter to publish
 metrics from small embedded sensors based on the NodeMCU to prometheus. The used arduino scetch can be found in the [dht22tomqtt](https://github.com/hikhvar/dht22tomqtt) repository.
@@ -42,7 +44,7 @@ make build
 
 To start the public available image run:
 ```bash
-docker run -it -v "$(pwd)/config.yaml:/config.yaml"  -p 8002:8002 hikhvar/mqtt2prometheus:latest 
+docker run -it -v "$(pwd)/config.yaml:/config.yaml"  -p 8002:8002 docker.pkg.github.com/hikhvar/mqtt2prometheus/mqtt2prometheus:latest 
 ```
 
 #### Build The Image locally
@@ -71,7 +73,7 @@ Usage of ./mqtt2prometheus.linux_amd64:
   -listen-address string
         listen address for HTTP server used to expose metrics
   -listen-port string
-        HTTP port used to expose metrics (default "8002")
+        HTTP port used to expose metrics (default "9641")
 
 ```
 
@@ -93,7 +95,7 @@ cache:
 # This is a list of valid metrics. Only metrics listed here will be exported
 metrics:
     # The name of the metric in prometheus
-  - prom_name: temperature
+  - prom_name: temperature_celsius
     # The name of the metric in a MQTT JSON message
     mqtt_name: temperature
     # The prometheus help text for this metric

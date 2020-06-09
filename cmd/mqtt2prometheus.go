@@ -24,7 +24,7 @@ var (
 	)
 	portFlag = flag.String(
 		"listen-port",
-		"8002",
+		"9641",
 		"HTTP port used to expose metrics",
 	)
 	addressFlag = flag.String(

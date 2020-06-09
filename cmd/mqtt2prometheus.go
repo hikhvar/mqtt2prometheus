@@ -6,14 +6,14 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/eclipse/paho.mqtt.golang"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
-
 	"github.com/hikhvar/mqtt2prometheus/pkg/config"
 	"github.com/hikhvar/mqtt2prometheus/pkg/metrics"
 	"github.com/hikhvar/mqtt2prometheus/pkg/mqttclient"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 var (
@@ -55,14 +55,20 @@ func main() {
 
 	errorChan := make(chan error, 1)
 
-	err = mqttclient.Subscribe(mqttClientOptions, mqttclient.SubscribeOptions{
-		Topic:             cfg.MQTT.TopicPath + "/+",
-		QoS:               cfg.MQTT.QoS,
-		OnMessageReceived: ingest.SetupSubscriptionHandler(errorChan),
-	})
-	if err != nil {
-		log.Fatalf("Could not connect to mqtt broker %s", err.Error())
+	for {
+		err = mqttclient.Subscribe(mqttClientOptions, mqttclient.SubscribeOptions{
+			Topic:             cfg.MQTT.TopicPath + "/+",
+			QoS:               cfg.MQTT.QoS,
+			OnMessageReceived: ingest.SetupSubscriptionHandler(errorChan),
+		})
+		if err == nil {
+			// connected, break loop
+			break
+		}
+		log.Printf("Could not connect to mqtt broker %s, sleep 10 second", err.Error())
+		time.Sleep(10 * time.Second)
 	}
+
 	prometheus.MustRegister(ingest.MessageMetric)
 	prometheus.MustRegister(collector)
 	http.Handle("/metrics", promhttp.Handler())

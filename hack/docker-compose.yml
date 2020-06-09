@@ -4,6 +4,8 @@ services:
     build:
       context: ../
       dockerfile: Dockerfile
+    ports:
+      - 8002:8002
     volumes:
       - type: bind
         source: ./mqtt2prometheus.yaml

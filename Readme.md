@@ -57,7 +57,7 @@ make container
 To run the container with a given config file:
 
 ```bash
-docker run -it -v "$(pwd)/config.yaml:/config.yaml"  -p 8002:8002 mqtt2prometheus:latest 
+docker run -it -v "$(pwd)/config.yaml:/config.yaml"  -p 9641:9641 mqtt2prometheus:latest 
 ```
 
 ## Configuration

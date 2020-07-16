@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"io/ioutil"
 	"regexp"
 	"time"
@@ -12,10 +13,13 @@ import (
 const GaugeValueType = "gauge"
 const CounterValueType = "counter"
 
+const DeviceIDRegexGroup = "deviceid"
+
 var MQTTConfigDefaults = MQTTConfig{
-	Server:    "tcp://127.0.0.1:1883",
-	TopicPath: "v1/devices/me",
-	QoS:       0,
+	Server:        "tcp://127.0.0.1:1883",
+	TopicPath:     "v1/devices/me",
+	DeviceIDRegex: mustNewRegexp(fmt.Sprintf("(.*/)?(?P<%s>.*)", DeviceIDRegexGroup)),
+	QoS:           0,
 }
 
 var CacheConfigDefaults = CacheConfig{
@@ -49,6 +53,29 @@ func (rf *Regexp) Match(s string) bool {
 	return rf.r == nil || rf.r.MatchString(s)
 }
 
+// GroupValue returns the value of the given group. If the group is not part of the underlying regexp, returns the empty string.
+func (rf *Regexp) GroupValue(s string, groupName string) string {
+	match := rf.r.FindStringSubmatch(s)
+	groupValues := make(map[string]string)
+	for i, name := range rf.r.SubexpNames() {
+		if name != "" {
+			groupValues[name] = match[i]
+		}
+	}
+	return groupValues[groupName]
+}
+
+func (rf *Regexp) RegEx() *regexp.Regexp {
+	return rf.r
+}
+
+func mustNewRegexp(pattern string) *Regexp {
+	return &Regexp{
+		pattern: pattern,
+		r:       regexp.MustCompile(pattern),
+	}
+}
+
 type Config struct {
 	Metrics []MetricConfig `yaml:"metrics"`
 	MQTT    *MQTTConfig    `yaml:"mqtt,omitempty"`
@@ -60,12 +87,12 @@ type CacheConfig struct {
 }
 
 type MQTTConfig struct {
-	Server        string `yaml:"server"`
-	TopicPath     string `yaml:"topic_path"`
-	DeviceIDRegex Regexp `yaml:"deviceIDRegex"`
-	User          string `yaml:"user"`
-	Password      string `yaml:"password"`
-	QoS           byte   `yaml:"qos"`
+	Server        string  `yaml:"server"`
+	TopicPath     string  `yaml:"topic_path"`
+	DeviceIDRegex *Regexp `yaml:"device_id_regex"`
+	User          string  `yaml:"user"`
+	Password      string  `yaml:"password"`
+	QoS           byte    `yaml:"qos"`
 }
 
 // Metrics Config is a mapping between a metric send on mqtt to a prometheus metric
@@ -117,6 +144,18 @@ func LoadConfig(configFile string) (Config, error) {
 	}
 	if cfg.Cache == nil {
 		cfg.Cache = &CacheConfigDefaults
+	}
+	if cfg.MQTT.DeviceIDRegex == nil {
+		cfg.MQTT.DeviceIDRegex = MQTTConfigDefaults.DeviceIDRegex
+	}
+	var validRegex bool
+	for _, name := range cfg.MQTT.DeviceIDRegex.RegEx().SubexpNames() {
+		if name == DeviceIDRegexGroup {
+			validRegex = true
+		}
+	}
+	if !validRegex {
+		return Config{}, fmt.Errorf("device id regex %q does not contain required regex group %q", cfg.MQTT.DeviceIDRegex.pattern, DeviceIDRegexGroup)
 	}
 	return cfg, nil
 }

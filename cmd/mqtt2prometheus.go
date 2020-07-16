@@ -51,7 +51,7 @@ func main() {
 	mqttClientOptions.SetPassword(cfg.MQTT.Password)
 
 	collector := metrics.NewCollector(cfg.Cache.Timeout, cfg.Metrics)
-	ingest := metrics.NewIngest(collector, cfg.Metrics)
+	ingest := metrics.NewIngest(collector, cfg.Metrics, cfg.MQTT.DeviceIDRegex)
 
 	errorChan := make(chan error, 1)
 

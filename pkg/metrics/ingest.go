@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"path/filepath"
 	"strconv"
 	"time"
 
@@ -15,11 +14,12 @@ import (
 
 type Ingest struct {
 	metricConfigs map[string][]config.MetricConfig
+	deviceIDRegex *config.Regexp
 	collector     Collector
 	MessageMetric *prometheus.CounterVec
 }
 
-func NewIngest(collector Collector, metrics []config.MetricConfig) *Ingest {
+func NewIngest(collector Collector, metrics []config.MetricConfig, deviceIDRegex *config.Regexp) *Ingest {
 	cfgs := make(map[string][]config.MetricConfig)
 	for i := range metrics {
 		key := metrics[i].MQTTName
@@ -27,6 +27,7 @@ func NewIngest(collector Collector, metrics []config.MetricConfig) *Ingest {
 	}
 	return &Ingest{
 		metricConfigs: cfgs,
+		deviceIDRegex: deviceIDRegex,
 		collector:     collector,
 		MessageMetric: prometheus.NewCounterVec(
 			prometheus.CounterOpts{
@@ -112,7 +113,7 @@ func (i *Ingest) store(deviceID string, rawMetrics MQTTPayload) error {
 func (i *Ingest) SetupSubscriptionHandler(errChan chan<- error) mqtt.MessageHandler {
 	return func(c mqtt.Client, m mqtt.Message) {
 		log.Printf("Got message '%s' on topic %s\n", string(m.Payload()), m.Topic())
-		deviceId := filepath.Base(m.Topic())
+		deviceId := i.deviceID(m.Topic())
 		var rawMetrics MQTTPayload
 		err := json.Unmarshal(m.Payload(), &rawMetrics)
 		if err != nil {
@@ -128,4 +129,9 @@ func (i *Ingest) SetupSubscriptionHandler(errChan chan<- error) mqtt.MessageHand
 		}
 		i.MessageMetric.WithLabelValues("success", m.Topic()).Inc()
 	}
+}
+
+// deviceID uses the configured DeviceIDRegex to extract the device ID from the given mqtt topic path.
+func (i *Ingest) deviceID(topic string) string {
+	return i.deviceIDRegex.GroupValue(topic, config.DeviceIDRegexGroup)
 }

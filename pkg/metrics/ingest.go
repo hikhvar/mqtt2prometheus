@@ -128,5 +128,4 @@ func (i *Ingest) SetupSubscriptionHandler(errChan chan<- error) mqtt.MessageHand
 		}
 		i.MessageMetric.WithLabelValues("success", m.Topic()).Inc()
 	}
-
 }

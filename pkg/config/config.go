@@ -22,12 +22,12 @@ var CacheConfigDefaults = CacheConfig{
 	Timeout: 2 * time.Minute,
 }
 
-type RegexpFilter struct {
+type Regexp struct {
 	r       *regexp.Regexp
 	pattern string
 }
 
-func (rf *RegexpFilter) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (rf *Regexp) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	var pattern string
 	if err := unmarshal(&pattern); err != nil {
 		return err
@@ -41,11 +41,11 @@ func (rf *RegexpFilter) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	return nil
 }
 
-func (rf *RegexpFilter) MarshalYAML() (interface{}, error) {
+func (rf *Regexp) MarshalYAML() (interface{}, error) {
 	return rf.pattern, nil
 }
 
-func (rf *RegexpFilter) Match(s string) bool {
+func (rf *Regexp) Match(s string) bool {
 	return rf.r == nil || rf.r.MatchString(s)
 }
 
@@ -60,18 +60,19 @@ type CacheConfig struct {
 }
 
 type MQTTConfig struct {
-	Server    string `yaml:"server"`
-	TopicPath string `yaml:"topic_path"`
-	User      string `yaml:"user"`
-	Password  string `yaml:"password"`
-	QoS       byte   `yaml:"qos"`
+	Server        string `yaml:"server"`
+	TopicPath     string `yaml:"topic_path"`
+	DeviceIDRegex Regexp `yaml:"deviceIDRegex"`
+	User          string `yaml:"user"`
+	Password      string `yaml:"password"`
+	QoS           byte   `yaml:"qos"`
 }
 
 // Metrics Config is a mapping between a metric send on mqtt to a prometheus metric
 type MetricConfig struct {
 	PrometheusName     string                    `yaml:"prom_name"`
 	MQTTName           string                    `yaml:"mqtt_name"`
-	SensorNameFilter   RegexpFilter              `yaml:"sensor_name_filter"`
+	SensorNameFilter   Regexp                    `yaml:"sensor_name_filter"`
 	Help               string                    `yaml:"help"`
 	ValueType          string                    `yaml:"type"`
 	ConstantLabels     map[string]string         `yaml:"const_labels"`

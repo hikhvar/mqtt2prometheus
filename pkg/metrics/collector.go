@@ -24,6 +24,7 @@ type Metric struct {
 	Description *prometheus.Desc
 	Value       float64
 	ValueType   prometheus.ValueType
+	IngestTime  time.Time
 }
 
 type MetricCollection []Metric
@@ -62,7 +63,7 @@ func (c *MemoryCachedCollector) Collect(mc chan<- prometheus.Metric) {
 			if err != nil {
 				panic(err)
 			}
-			mc <- m
+			mc <- prometheus.NewMetricWithTimestamp(metric.IngestTime, m)
 		}
 	}
 }

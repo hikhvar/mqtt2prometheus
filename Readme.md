@@ -1,5 +1,7 @@
 # MQTT2Prometheus
 ![](https://github.com/hikhvar/mqtt2prometheus/workflows/tests/badge.svg) ![](https://github.com/hikhvar/mqtt2prometheus/workflows/release/badge.svg)
+
+
 This exporter translates from MQTT topics to prometheus metrics. The core design is that clients send arbitrary JSON messages
  on the topics. The translation is programmed into the mqtt2prometheus since we often can not change the IoT devices sending 
  the messages. Clients can push 

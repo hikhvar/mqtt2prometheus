@@ -115,7 +115,7 @@ type StringValueMappingConfig struct {
 
 func (mc *MetricConfig) PrometheusDescription() *prometheus.Desc {
 	return prometheus.NewDesc(
-		mc.PrometheusName, mc.Help, []string{"sensor"}, mc.ConstantLabels,
+		mc.PrometheusName, mc.Help, []string{"sensor", "topic"}, mc.ConstantLabels,
 	)
 }
 

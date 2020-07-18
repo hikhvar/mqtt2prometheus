@@ -50,10 +50,9 @@ func (i *Ingest) validMetric(metric string, deviceID string) (config.MetricConfi
 	return config.MetricConfig{}, false
 }
 
-type MQTTPayload map[string]interface{}
-
-func (i *Ingest) store(deviceID string, payload []byte) error {
+func (i *Ingest) store(topic string, payload []byte) error {
 	var mc MetricCollection
+	deviceID := i.deviceID(topic)
 	parsed := gojsonq.New().FromString(string(payload))
 
 	for path := range i.metricConfigs {
@@ -66,6 +65,7 @@ func (i *Ingest) store(deviceID string, payload []byte) error {
 		if err != nil {
 			return fmt.Errorf("failed to parse valid metric value: %w", err)
 		}
+		m.Topic = topic
 		mc = append(mc, m)
 	}
 
@@ -128,9 +128,8 @@ func (i *Ingest) parseMetric(metricPath string, deviceID string, value interface
 func (i *Ingest) SetupSubscriptionHandler(errChan chan<- error) mqtt.MessageHandler {
 	return func(c mqtt.Client, m mqtt.Message) {
 		log.Printf("Got message '%s' on topic %s\n", string(m.Payload()), m.Topic())
-		deviceId := i.deviceID(m.Topic())
 
-		err := i.store(deviceId, m.Payload())
+		err := i.store(m.Topic(), m.Payload())
 		if err != nil {
 			errChan <- fmt.Errorf("could not store metrics '%s' on topic %s: %s", string(m.Payload()), m.Topic(), err.Error())
 			i.MessageMetric.WithLabelValues("storeError", m.Topic()).Inc()

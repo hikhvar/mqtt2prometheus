@@ -25,6 +25,7 @@ type Metric struct {
 	Value       float64
 	ValueType   prometheus.ValueType
 	IngestTime  time.Time
+	Topic       string
 }
 
 type MetricCollection []Metric
@@ -59,6 +60,7 @@ func (c *MemoryCachedCollector) Collect(mc chan<- prometheus.Metric) {
 				metric.ValueType,
 				metric.Value,
 				device,
+				metric.Topic,
 			)
 			if err != nil {
 				panic(err)

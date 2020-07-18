@@ -51,13 +51,13 @@ func main() {
 	mqttClientOptions.SetPassword(cfg.MQTT.Password)
 
 	collector := metrics.NewCollector(cfg.Cache.Timeout, cfg.Metrics)
-	ingest := metrics.NewIngest(collector, cfg.Metrics)
+	ingest := metrics.NewIngest(collector, cfg.Metrics, cfg.MQTT.DeviceIDRegex)
 
 	errorChan := make(chan error, 1)
 
 	for {
 		err = mqttclient.Subscribe(mqttClientOptions, mqttclient.SubscribeOptions{
-			Topic:             cfg.MQTT.TopicPath + "/+",
+			Topic:             cfg.MQTT.TopicPath,
 			QoS:               cfg.MQTT.QoS,
 			OnMessageReceived: ingest.SetupSubscriptionHandler(errorChan),
 		})

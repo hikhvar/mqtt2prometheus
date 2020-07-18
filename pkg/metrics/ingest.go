@@ -1,12 +1,12 @@
 package metrics
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
-	"path/filepath"
 	"strconv"
 	"time"
+
+	gojsonq "github.com/thedevsaddam/gojsonq/v2"
 
 	"github.com/eclipse/paho.mqtt.golang"
 	"github.com/hikhvar/mqtt2prometheus/pkg/config"
@@ -15,11 +15,12 @@ import (
 
 type Ingest struct {
 	metricConfigs map[string][]config.MetricConfig
+	deviceIDRegex *config.Regexp
 	collector     Collector
 	MessageMetric *prometheus.CounterVec
 }
 
-func NewIngest(collector Collector, metrics []config.MetricConfig) *Ingest {
+func NewIngest(collector Collector, metrics []config.MetricConfig, deviceIDRegex *config.Regexp) *Ingest {
 	cfgs := make(map[string][]config.MetricConfig)
 	for i := range metrics {
 		key := metrics[i].MQTTName
@@ -27,6 +28,7 @@ func NewIngest(collector Collector, metrics []config.MetricConfig) *Ingest {
 	}
 	return &Ingest{
 		metricConfigs: cfgs,
+		deviceIDRegex: deviceIDRegex,
 		collector:     collector,
 		MessageMetric: prometheus.NewCounterVec(
 			prometheus.CounterOpts{
@@ -48,79 +50,86 @@ func (i *Ingest) validMetric(metric string, deviceID string) (config.MetricConfi
 	return config.MetricConfig{}, false
 }
 
-type MQTTPayload map[string]interface{}
-
-func (i *Ingest) store(deviceID string, rawMetrics MQTTPayload) error {
+func (i *Ingest) store(topic string, payload []byte) error {
 	var mc MetricCollection
+	deviceID := i.deviceID(topic)
+	parsed := gojsonq.New().FromString(string(payload))
 
-	for metricName, value := range rawMetrics {
-		cfg, cfgFound := i.validMetric(metricName, deviceID)
-		if !cfgFound {
+	for path := range i.metricConfigs {
+		rawValue := parsed.Find(path)
+		parsed.Reset()
+		if rawValue == nil {
 			continue
 		}
-
-		var metricValue float64
-
-		if boolValue, ok := value.(bool); ok {
-			if boolValue {
-				metricValue = 1
-			} else {
-				metricValue = 0
-			}
-		} else if strValue, ok := value.(string); ok {
-
-			// If string value mapping is defined, use that
-			if cfg.StringValueMapping != nil {
-
-				floatValue, ok := cfg.StringValueMapping.Map[strValue]
-				if ok {
-					metricValue = floatValue
-				} else if cfg.StringValueMapping.ErrorValue != nil {
-					metricValue = *cfg.StringValueMapping.ErrorValue
-				} else {
-					return fmt.Errorf("got unexpected string data '%s'", strValue)
-				}
-
-			} else {
-
-				// otherwise try to parse float
-				floatValue, err := strconv.ParseFloat(strValue, 64)
-				if err != nil {
-					return fmt.Errorf("got data with unexpectd type: %T ('%s') and failed to parse to float", value, value)
-				}
-				metricValue = floatValue
-
-			}
-
-		} else if floatValue, ok := value.(float64); ok {
-			metricValue = floatValue
-		} else {
-			return fmt.Errorf("got data with unexpectd type: %T ('%s')", value, value)
+		m, err := i.parseMetric(path, deviceID, rawValue)
+		if err != nil {
+			return fmt.Errorf("failed to parse valid metric value: %w", err)
 		}
-
-		mc = append(mc, Metric{
-			Description: cfg.PrometheusDescription(),
-			Value:       metricValue,
-			ValueType:   cfg.PrometheusValueType(),
-			IngestTime:  time.Now(),
-		})
+		m.Topic = topic
+		mc = append(mc, m)
 	}
+
 	i.collector.Observe(deviceID, mc)
 	return nil
+}
+
+func (i *Ingest) parseMetric(metricPath string, deviceID string, value interface{}) (Metric, error) {
+	cfg, cfgFound := i.validMetric(metricPath, deviceID)
+	if !cfgFound {
+		return Metric{}, nil
+	}
+
+	var metricValue float64
+
+	if boolValue, ok := value.(bool); ok {
+		if boolValue {
+			metricValue = 1
+		} else {
+			metricValue = 0
+		}
+	} else if strValue, ok := value.(string); ok {
+
+		// If string value mapping is defined, use that
+		if cfg.StringValueMapping != nil {
+
+			floatValue, ok := cfg.StringValueMapping.Map[strValue]
+			if ok {
+				metricValue = floatValue
+			} else if cfg.StringValueMapping.ErrorValue != nil {
+				metricValue = *cfg.StringValueMapping.ErrorValue
+			} else {
+				return Metric{}, fmt.Errorf("got unexpected string data '%s'", strValue)
+			}
+
+		} else {
+
+			// otherwise try to parse float
+			floatValue, err := strconv.ParseFloat(strValue, 64)
+			if err != nil {
+				return Metric{}, fmt.Errorf("got data with unexpectd type: %T ('%s') and failed to parse to float", value, value)
+			}
+			metricValue = floatValue
+
+		}
+
+	} else if floatValue, ok := value.(float64); ok {
+		metricValue = floatValue
+	} else {
+		return Metric{}, fmt.Errorf("got data with unexpectd type: %T ('%s')", value, value)
+	}
+	return Metric{
+		Description: cfg.PrometheusDescription(),
+		Value:       metricValue,
+		ValueType:   cfg.PrometheusValueType(),
+		IngestTime:  time.Now(),
+	}, nil
 }
 
 func (i *Ingest) SetupSubscriptionHandler(errChan chan<- error) mqtt.MessageHandler {
 	return func(c mqtt.Client, m mqtt.Message) {
 		log.Printf("Got message '%s' on topic %s\n", string(m.Payload()), m.Topic())
-		deviceId := filepath.Base(m.Topic())
-		var rawMetrics MQTTPayload
-		err := json.Unmarshal(m.Payload(), &rawMetrics)
-		if err != nil {
-			errChan <- fmt.Errorf("could not decode message '%s' on topic %s: %s", string(m.Payload()), m.Topic(), err.Error())
-			i.MessageMetric.WithLabelValues("decodeError", m.Topic()).Desc()
-			return
-		}
-		err = i.store(deviceId, rawMetrics)
+
+		err := i.store(m.Topic(), m.Payload())
 		if err != nil {
 			errChan <- fmt.Errorf("could not store metrics '%s' on topic %s: %s", string(m.Payload()), m.Topic(), err.Error())
 			i.MessageMetric.WithLabelValues("storeError", m.Topic()).Inc()
@@ -128,5 +137,9 @@ func (i *Ingest) SetupSubscriptionHandler(errChan chan<- error) mqtt.MessageHand
 		}
 		i.MessageMetric.WithLabelValues("success", m.Topic()).Inc()
 	}
+}
 
+// deviceID uses the configured DeviceIDRegex to extract the device ID from the given mqtt topic path.
+func (i *Ingest) deviceID(topic string) string {
+	return i.deviceIDRegex.GroupValue(topic, config.DeviceIDRegexGroup)
 }

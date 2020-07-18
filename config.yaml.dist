@@ -5,8 +5,13 @@ mqtt:
   # Optional: Username and Password for authenticating with the MQTT Server
   # user: bob
   # password: happylittleclouds
-  # The Topic path to subscripe to. Actually this will become `$topic_path/+`
-  topic_path: v1/devices/me
+  # The Topic path to subscripe to.
+  topic_path: v1/devices/me/+
+  # Optional: Regular expression to extract the device ID from the topic path. The default regular expression, assumes
+  # that the last "element" of the topic_path is the device id.
+  # The regular expression must contain a named capture group with the name deviceid
+  # For example the expression for tasamota based sensors is "tele/(?P<deviceid>.*)/.*"
+  # device_id_regex: "(.*/)?(?P<deviceid>.*)"
   # The MQTT QoS level
   qos: 0
 cache:

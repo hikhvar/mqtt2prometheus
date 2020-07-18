@@ -6,7 +6,7 @@ mqtt:
   # user: bob
   # password: happylittleclouds
   # The Topic path to subscripe to.
-  topic_path: v1/devices/me
+  topic_path: v1/devices/me/+
   # Optional: Regular expression to extract the device ID from the topic path. The default regular expression, assumes
   # that the last "element" of the topic_path is the device id.
   # The regular expression must contain a named capture group with the name deviceid

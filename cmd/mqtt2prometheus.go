@@ -57,7 +57,7 @@ func main() {
 
 	for {
 		err = mqttclient.Subscribe(mqttClientOptions, mqttclient.SubscribeOptions{
-			Topic:             cfg.MQTT.TopicPath + "/+",
+			Topic:             cfg.MQTT.TopicPath,
 			QoS:               cfg.MQTT.QoS,
 			OnMessageReceived: ingest.SetupSubscriptionHandler(errorChan),
 		})

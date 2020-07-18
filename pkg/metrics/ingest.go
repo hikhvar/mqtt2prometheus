@@ -59,8 +59,9 @@ func (i *Ingest) store(deviceID string, payload []byte) error {
 	for path := range i.metricConfigs {
 		rawValue := parsed.Find(path)
 		parsed.Reset()
-		fmt.Printf("query path: %q data: %v\n", path, rawValue)
-
+		if rawValue == nil {
+			continue
+		}
 		m, err := i.parseMetric(path, deviceID, rawValue)
 		if err != nil {
 			return fmt.Errorf("failed to parse valid metric value: %w", err)

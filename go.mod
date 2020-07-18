@@ -12,6 +12,8 @@ require (
 	github.com/prometheus/client_model v0.2.0
 	github.com/prometheus/common v0.9.1
 	github.com/prometheus/procfs v0.0.11
+	github.com/thedevsaddam/gojsonq v2.3.0+incompatible // indirect
+	github.com/thedevsaddam/gojsonq/v2 v2.5.2
 	golang.org/x/net v0.0.0-20190613194153-d28f0bde5980
 	gopkg.in/yaml.v2 v2.2.5
 )

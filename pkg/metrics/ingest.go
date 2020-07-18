@@ -1,11 +1,12 @@
 package metrics
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"strconv"
 	"time"
+
+	gojsonq "github.com/thedevsaddam/gojsonq/v2"
 
 	"github.com/eclipse/paho.mqtt.golang"
 	"github.com/hikhvar/mqtt2prometheus/pkg/config"
@@ -51,77 +52,84 @@ func (i *Ingest) validMetric(metric string, deviceID string) (config.MetricConfi
 
 type MQTTPayload map[string]interface{}
 
-func (i *Ingest) store(deviceID string, rawMetrics MQTTPayload) error {
+func (i *Ingest) store(deviceID string, payload []byte) error {
 	var mc MetricCollection
+	parsed := gojsonq.New().FromString(string(payload))
 
-	for metricName, value := range rawMetrics {
-		cfg, cfgFound := i.validMetric(metricName, deviceID)
-		if !cfgFound {
-			continue
+	for path := range i.metricConfigs {
+		rawValue := parsed.Find(path)
+		parsed.Reset()
+		fmt.Printf("query path: %q data: %v\n", path, rawValue)
+
+		m, err := i.parseMetric(path, deviceID, rawValue)
+		if err != nil {
+			return fmt.Errorf("failed to parse valid metric value: %w", err)
 		}
-
-		var metricValue float64
-
-		if boolValue, ok := value.(bool); ok {
-			if boolValue {
-				metricValue = 1
-			} else {
-				metricValue = 0
-			}
-		} else if strValue, ok := value.(string); ok {
-
-			// If string value mapping is defined, use that
-			if cfg.StringValueMapping != nil {
-
-				floatValue, ok := cfg.StringValueMapping.Map[strValue]
-				if ok {
-					metricValue = floatValue
-				} else if cfg.StringValueMapping.ErrorValue != nil {
-					metricValue = *cfg.StringValueMapping.ErrorValue
-				} else {
-					return fmt.Errorf("got unexpected string data '%s'", strValue)
-				}
-
-			} else {
-
-				// otherwise try to parse float
-				floatValue, err := strconv.ParseFloat(strValue, 64)
-				if err != nil {
-					return fmt.Errorf("got data with unexpectd type: %T ('%s') and failed to parse to float", value, value)
-				}
-				metricValue = floatValue
-
-			}
-
-		} else if floatValue, ok := value.(float64); ok {
-			metricValue = floatValue
-		} else {
-			return fmt.Errorf("got data with unexpectd type: %T ('%s')", value, value)
-		}
-
-		mc = append(mc, Metric{
-			Description: cfg.PrometheusDescription(),
-			Value:       metricValue,
-			ValueType:   cfg.PrometheusValueType(),
-			IngestTime:  time.Now(),
-		})
+		mc = append(mc, m)
 	}
+
 	i.collector.Observe(deviceID, mc)
 	return nil
+}
+
+func (i *Ingest) parseMetric(metricPath string, deviceID string, value interface{}) (Metric, error) {
+	cfg, cfgFound := i.validMetric(metricPath, deviceID)
+	if !cfgFound {
+		return Metric{}, nil
+	}
+
+	var metricValue float64
+
+	if boolValue, ok := value.(bool); ok {
+		if boolValue {
+			metricValue = 1
+		} else {
+			metricValue = 0
+		}
+	} else if strValue, ok := value.(string); ok {
+
+		// If string value mapping is defined, use that
+		if cfg.StringValueMapping != nil {
+
+			floatValue, ok := cfg.StringValueMapping.Map[strValue]
+			if ok {
+				metricValue = floatValue
+			} else if cfg.StringValueMapping.ErrorValue != nil {
+				metricValue = *cfg.StringValueMapping.ErrorValue
+			} else {
+				return Metric{}, fmt.Errorf("got unexpected string data '%s'", strValue)
+			}
+
+		} else {
+
+			// otherwise try to parse float
+			floatValue, err := strconv.ParseFloat(strValue, 64)
+			if err != nil {
+				return Metric{}, fmt.Errorf("got data with unexpectd type: %T ('%s') and failed to parse to float", value, value)
+			}
+			metricValue = floatValue
+
+		}
+
+	} else if floatValue, ok := value.(float64); ok {
+		metricValue = floatValue
+	} else {
+		return Metric{}, fmt.Errorf("got data with unexpectd type: %T ('%s')", value, value)
+	}
+	return Metric{
+		Description: cfg.PrometheusDescription(),
+		Value:       metricValue,
+		ValueType:   cfg.PrometheusValueType(),
+		IngestTime:  time.Now(),
+	}, nil
 }
 
 func (i *Ingest) SetupSubscriptionHandler(errChan chan<- error) mqtt.MessageHandler {
 	return func(c mqtt.Client, m mqtt.Message) {
 		log.Printf("Got message '%s' on topic %s\n", string(m.Payload()), m.Topic())
 		deviceId := i.deviceID(m.Topic())
-		var rawMetrics MQTTPayload
-		err := json.Unmarshal(m.Payload(), &rawMetrics)
-		if err != nil {
-			errChan <- fmt.Errorf("could not decode message '%s' on topic %s: %s", string(m.Payload()), m.Topic(), err.Error())
-			i.MessageMetric.WithLabelValues("decodeError", m.Topic()).Desc()
-			return
-		}
-		err = i.store(deviceId, rawMetrics)
+
+		err := i.store(deviceId, m.Payload())
 		if err != nil {
 			errChan <- fmt.Errorf("could not store metrics '%s' on topic %s: %s", string(m.Payload()), m.Topic(), err.Error())
 			i.MessageMetric.WithLabelValues("storeError", m.Topic()).Inc()

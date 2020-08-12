@@ -7,7 +7,7 @@ This exporter translates from MQTT topics to prometheus metrics. The core design
  the messages. Clients can push 
 metrics via MQTT to an MQTT Broker. This exporter subscribes to the broker and
 publish the received messages as prometheus metrics. I wrote this exporter to publish
-metrics from small embedded sensors based on the NodeMCU to prometheus. The used arduino scetch can be found in the [dht22tomqtt](https://github.com/hikhvar/dht22tomqtt) repository.
+metrics from small embedded sensors based on the NodeMCU to prometheus. The used arduino scetch can be found in the [dht22tomqtt](https://github.com/hikhvar/dht22tomqtt) repository. A local hacking environment with mqtt2prometheus, a MQTT broker and a prometheus server is in the [hack](https://github.com/hikhvar/mqtt2prometheus/tree/master/hack) directory.
 
 ## Assumptions about Messages and Topics
 This exporter makes some assumptions about the MQTT topics. This exporter assumes that each

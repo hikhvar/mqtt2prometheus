@@ -86,7 +86,7 @@ The config file can look like this:
 mqtt:
   # The MQTT broker to connect to
   server: tcp://127.0.0.1:1883
-  # The Topic path to subscripe to. Be aware that you have to specify the wildcard. 
+  # The Topic path to subscribe to. Be aware that you have to specify the wildcard. 
   topic_path: v1/devices/me/+
   # Optional: Regular expression to extract the device ID from the topic path. The default regular expression, assumes
   # that the last "element" of the topic_path is the device id.

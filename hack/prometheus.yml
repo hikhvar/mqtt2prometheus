@@ -27,4 +27,4 @@ scrape_configs:
     scheme: http
     static_configs:
       - targets:
-          - mqtt2prometheus:8002
+          - mqtt2prometheus:9641

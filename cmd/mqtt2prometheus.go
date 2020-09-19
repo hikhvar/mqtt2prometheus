@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
@@ -14,6 +15,13 @@ import (
 	"github.com/hikhvar/mqtt2prometheus/pkg/mqttclient"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+)
+
+// These variables are set by goreleaser at linking time.
+var (
+	version string
+	commit  string
+	date    string
 )
 
 var (
@@ -32,10 +40,19 @@ var (
 		"0.0.0.0",
 		"listen address for HTTP server used to expose metrics",
 	)
+	versionFlag = flag.Bool(
+		"version",
+		false,
+		"show the builds version, date and commit",
+	)
 )
 
 func main() {
 	flag.Parse()
+	if *versionFlag {
+		mustShowVersion()
+		os.Exit(0)
+	}
 	c := make(chan os.Signal, 1)
 	hostName, err := os.Hostname()
 	if err != nil {
@@ -92,4 +109,21 @@ func main() {
 
 func getListenAddress() string {
 	return fmt.Sprintf("%s:%s", *addressFlag, *portFlag)
+}
+
+func mustShowVersion() {
+	versionInfo := struct {
+		Version string
+		Commit  string
+		Date    string
+	}{
+		Version: version,
+		Commit:  commit,
+		Date:    date,
+	}
+
+	err := json.NewEncoder(os.Stdout).Encode(versionInfo)
+	if err != nil {
+		panic(err)
+	}
 }

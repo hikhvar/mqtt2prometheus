@@ -66,6 +66,7 @@ func main() {
 	mqttClientOptions.AddBroker(cfg.MQTT.Server).SetClientID(hostName).SetCleanSession(true)
 	mqttClientOptions.SetUsername(cfg.MQTT.User)
 	mqttClientOptions.SetPassword(cfg.MQTT.Password)
+	mqttClientOptions.SetClientID(mustMQTTClientID())
 
 	collector := metrics.NewCollector(cfg.Cache.Timeout, cfg.Metrics)
 	ingest := metrics.NewIngest(collector, cfg.Metrics, cfg.MQTT.DeviceIDRegex)
@@ -126,4 +127,13 @@ func mustShowVersion() {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func mustMQTTClientID() string {
+	host, err := os.Hostname()
+	if err != nil {
+		panic(fmt.Sprintf("failed to get hostname: %w", err))
+	}
+	pid := os.Getpid()
+	return fmt.Sprintf("%s-%d", host, pid)
 }

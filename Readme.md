@@ -39,6 +39,8 @@ To build the exporter run:
 make build
 ```
 
+Only the latest two Go major versions are tested and supported. 
+
 ### Docker
 
 #### Use Public Image

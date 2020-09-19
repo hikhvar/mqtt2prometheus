@@ -132,7 +132,7 @@ func mustShowVersion() {
 func mustMQTTClientID() string {
 	host, err := os.Hostname()
 	if err != nil {
-		panic(fmt.Sprintf("failed to get hostname: %w", err))
+		panic(fmt.Sprintf("failed to get hostname: %v", err))
 	}
 	pid := os.Getpid()
 	return fmt.Sprintf("%s-%d", host, pid)

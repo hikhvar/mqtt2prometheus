@@ -21,6 +21,16 @@ jobs:
         run: go test ./...
       - name: Vet
         run: go vet ./...
+        # Release docker file
+      - name: Build the Docker image
+        run: docker build -t docker.pkg.github.com/hikhvar/mqtt2prometheus/mqtt2prometheus:latest -t docker.pkg.github.com/hikhvar/mqtt2prometheus/mqtt2prometheus:${GITHUB_REF##*/} .
+      - name: Login to Github Packages
+        run: echo ${{ secrets.GITHUB_TOKEN }} | docker login docker.pkg.github.com -u ${{ github.actor }} --password-stdin
+      - name: Login to Dockerhub
+        run: echo ${{ secrets.DOCKERHUB_ACCESS_KEY }} | docker login -u hikhvar --password-stdin
+        # Github Registry does not support the github actions token
+      - name: Login to Github Registry
+        run: echo ${{secrets.PERSONAL_ACCESS_TOKEN }} | docker login ghcr.io -u hikhvar --password-stdin
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v1
         with:
@@ -28,12 +38,3 @@ jobs:
           args: release --rm-dist
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      # Release docker file
-      - name: Build the Docker image
-        run: docker build -t docker.pkg.github.com/hikhvar/mqtt2prometheus/mqtt2prometheus:latest -t docker.pkg.github.com/hikhvar/mqtt2prometheus/mqtt2prometheus:${GITHUB_REF##*/} .
-      - name: Login to Github
-        run: echo ${{ secrets.GITHUB_TOKEN }} | docker login docker.pkg.github.com -u ${{ github.actor }} --password-stdin
-      - name: Publish latest image        
-        run: docker push docker.pkg.github.com/hikhvar/mqtt2prometheus/mqtt2prometheus:latest
-      - name: Publish tag image        
-        run: docker push docker.pkg.github.com/hikhvar/mqtt2prometheus/mqtt2prometheus:${GITHUB_REF##*/} 

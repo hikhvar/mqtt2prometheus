@@ -21,9 +21,7 @@ jobs:
         run: go test ./...
       - name: Vet
         run: go vet ./...
-        # Release docker file
-      - name: Build the Docker image
-        run: docker build -t docker.pkg.github.com/hikhvar/mqtt2prometheus/mqtt2prometheus:latest -t docker.pkg.github.com/hikhvar/mqtt2prometheus/mqtt2prometheus:${GITHUB_REF##*/} .
+        # Login to the registries
       - name: Login to Github Packages
         run: echo ${{ secrets.GITHUB_TOKEN }} | docker login docker.pkg.github.com -u ${{ github.actor }} --password-stdin
       - name: Login to Dockerhub

@@ -60,7 +60,8 @@ changelog:
     - '^test:'
 
 dockers:
-  - image_templates:
+  - dockerfile: release/Dockerfile.scratch
+    image_templates:
       - "hikhvar/mqtt2prometheus:{{ .Tag }}"
       - "hikhvar/mqtt2prometheus:latest"
       - "docker.pkg.github.com/hikhvar/mqtt2prometheus/mqtt2prometheus:{{ .Tag }}"

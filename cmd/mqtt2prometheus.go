@@ -61,7 +61,7 @@ func main() {
 		os.Exit(0)
 	}
 	logger := mustSetupLogger()
-	defer logger.Sync()
+	defer logger.Sync() //nolint:errcheck
 	c := make(chan os.Signal, 1)
 	hostName, err := os.Hostname()
 	if err != nil {

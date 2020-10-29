@@ -27,6 +27,9 @@ all: build
 GO111MODULE=on
 
 
+lint:
+	golangci-lint run
+
 test:
 	go test ./...
 	go vet ./...

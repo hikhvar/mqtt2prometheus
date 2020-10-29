@@ -55,16 +55,13 @@ func (c *MemoryCachedCollector) Collect(mc chan<- prometheus.Metric) {
 	for device, metricsRaw := range c.cache.Items() {
 		metrics := metricsRaw.Object.(MetricCollection)
 		for _, metric := range metrics {
-			m, err := prometheus.NewConstMetric(
+			m := prometheus.MustNewConstMetric(
 				metric.Description,
 				metric.ValueType,
 				metric.Value,
 				device,
 				metric.Topic,
 			)
-			if err != nil {
-				panic(err)
-			}
 			mc <- prometheus.NewMetricWithTimestamp(metric.IngestTime, m)
 		}
 	}

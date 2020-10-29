@@ -4,7 +4,8 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"log"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	"net/http"
 	"os"
 	"time"
@@ -45,6 +46,12 @@ var (
 		false,
 		"show the builds version, date and commit",
 	)
+	logLevelFlag    = zap.LevelFlag("log-level", zap.InfoLevel, "sets the default loglevel (default: \"info\")")
+	logEncodingFlag = flag.String(
+		"log-format",
+		"console",
+		"set the desired log output format. Valid values are 'console' and 'json'",
+	)
 )
 
 func main() {
@@ -53,14 +60,16 @@ func main() {
 		mustShowVersion()
 		os.Exit(0)
 	}
+	logger := mustSetupLogger()
+	defer logger.Sync()
 	c := make(chan os.Signal, 1)
 	hostName, err := os.Hostname()
 	if err != nil {
-		log.Fatalf("Could not get hostname. %s\n", err.Error())
+		logger.Fatal("Could not get hostname", zap.Error(err))
 	}
 	cfg, err := config.LoadConfig(*configFlag)
 	if err != nil {
-		log.Fatalf("Could not load config: %s\n", err.Error())
+		logger.Fatal("Could not load config", zap.Error(err))
 	}
 	mqttClientOptions := mqtt.NewClientOptions()
 	mqttClientOptions.AddBroker(cfg.MQTT.Server).SetClientID(hostName).SetCleanSession(true)
@@ -78,12 +87,13 @@ func main() {
 			Topic:             cfg.MQTT.TopicPath,
 			QoS:               cfg.MQTT.QoS,
 			OnMessageReceived: ingest.SetupSubscriptionHandler(errorChan),
+			Logger:            logger,
 		})
 		if err == nil {
 			// connected, break loop
 			break
 		}
-		log.Printf("Could not connect to mqtt broker %s, sleep 10 second", err.Error())
+		logger.Warn("could not connect to mqtt broker %s, sleep 10 second", zap.Error(err))
 		time.Sleep(10 * time.Second)
 	}
 
@@ -93,17 +103,17 @@ func main() {
 	go func() {
 		err = http.ListenAndServe(getListenAddress(), nil)
 		if err != nil {
-			log.Fatalf("Error while serving http: %s", err.Error())
+			logger.Fatal("Error while serving http", zap.Error(err))
 		}
 	}()
 
 	for {
 		select {
 		case <-c:
-			log.Println("Terminated via Signal. Stop.")
+			logger.Info("Terminated via Signal. Stop.")
 			os.Exit(0)
 		case err = <-errorChan:
-			log.Printf("Error while processing message. %s", err.Error())
+			logger.Error("Error while processing message", zap.Error(err))
 		}
 	}
 }
@@ -136,4 +146,20 @@ func mustMQTTClientID() string {
 	}
 	pid := os.Getpid()
 	return fmt.Sprintf("%s-%d", host, pid)
+}
+
+func mustSetupLogger() *zap.Logger {
+	cfg := zap.NewProductionConfig()
+	cfg.Level = zap.NewAtomicLevelAt(*logLevelFlag)
+	cfg.Encoding = *logEncodingFlag
+	if cfg.Encoding == "console" {
+		cfg.EncoderConfig.EncodeTime = zapcore.RFC3339TimeEncoder
+	}
+	logger, err := cfg.Build()
+	if err != nil {
+		panic(fmt.Sprintf("failed to build logger: %v", err))
+	}
+
+	config.SetProcessContext(logger)
+	return logger
 }

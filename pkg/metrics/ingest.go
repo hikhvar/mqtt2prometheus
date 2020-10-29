@@ -2,7 +2,7 @@ package metrics
 
 import (
 	"fmt"
-	"log"
+	"go.uber.org/zap"
 	"strconv"
 	"time"
 
@@ -18,6 +18,7 @@ type Ingest struct {
 	deviceIDRegex *config.Regexp
 	collector     Collector
 	MessageMetric *prometheus.CounterVec
+	logger        *zap.Logger
 }
 
 func NewIngest(collector Collector, metrics []config.MetricConfig, deviceIDRegex *config.Regexp) *Ingest {
@@ -36,6 +37,7 @@ func NewIngest(collector Collector, metrics []config.MetricConfig, deviceIDRegex
 				Help: "received messages per topic and status",
 			}, []string{"status", "topic"},
 		),
+		logger: config.ProcessContext.Logger(),
 	}
 }
 
@@ -127,8 +129,7 @@ func (i *Ingest) parseMetric(metricPath string, deviceID string, value interface
 
 func (i *Ingest) SetupSubscriptionHandler(errChan chan<- error) mqtt.MessageHandler {
 	return func(c mqtt.Client, m mqtt.Message) {
-		log.Printf("Got message '%s' on topic %s\n", string(m.Payload()), m.Topic())
-
+		i.logger.Debug("Got message", zap.String("topic", m.Topic()), zap.String("payload", string(m.Payload())))
 		err := i.store(m.Topic(), m.Payload())
 		if err != nil {
 			errChan <- fmt.Errorf("could not store metrics '%s' on topic %s: %s", string(m.Payload()), m.Topic(), err.Error())

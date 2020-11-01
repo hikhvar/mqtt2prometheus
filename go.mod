@@ -14,6 +14,7 @@ require (
 	github.com/prometheus/procfs v0.0.11
 	github.com/thedevsaddam/gojsonq v2.3.0+incompatible // indirect
 	github.com/thedevsaddam/gojsonq/v2 v2.5.2
-	golang.org/x/net v0.0.0-20190613194153-d28f0bde5980
+	go.uber.org/zap v1.16.0
+	golang.org/x/net v0.0.0-20190620200207-3b0461eec859
 	gopkg.in/yaml.v2 v2.2.5
 )

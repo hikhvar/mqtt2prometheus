@@ -72,13 +72,21 @@ Available command line flags:
 ```text
 Usage of ./mqtt2prometheus.linux_amd64:
   -config string
-        config file (default "config.yaml")
+    	config file (default "config.yaml")
   -listen-address string
-        listen address for HTTP server used to expose metrics
+    	listen address for HTTP server used to expose metrics (default "0.0.0.0")
   -listen-port string
-        HTTP port used to expose metrics (default "9641")
-
+    	HTTP port used to expose metrics (default "9641")
+  -log-format string
+    	set the desired log output format. Valid values are 'console' and 'json' (default "console")
+  -log-level value
+    	sets the default loglevel (default: "info")
+  -version
+    	show the builds version, date and commit
 ```
+The logging is implemented via [zap](https://github.com/uber-go/zap). The logs are printed to `stderr` and valid log levels are
+those supported by zap.  
+
 
 ### Config file
 The config file can look like this:
@@ -136,3 +144,9 @@ metrics:
     const_labels:
       sensor_type: dht22%       
 ```
+
+
+## Best Practices
+The exporter can only listen to one topic_path per instance. If you have to listen to two different topic_paths it is 
+recommended to run two instances of the mqtt2prometheus exporter. You can run both on the same host or if you run in Kubernetes,
+even in the same pod.

@@ -21,3 +21,16 @@ jobs:
       run: go test ./...
     - name: Vet
       run: go vet ./...
+  linting:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Run golangci-lint
+        uses: actions-contrib/golangci-lint@v1
+  image-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build the Docker image
+        run: docker build . --file Dockerfile --tag mqtt2prometheus:${GITHUB_REF##*/}

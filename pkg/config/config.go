@@ -10,10 +10,13 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-const GaugeValueType = "gauge"
-const CounterValueType = "counter"
+const (
+	GaugeValueType   = "gauge"
+	CounterValueType = "counter"
 
-const DeviceIDRegexGroup = "deviceid"
+	DeviceIDRegexGroup   = "deviceid"
+	MetricNameRegexGroup = "metricname"
+)
 
 var MQTTConfigDefaults = MQTTConfig{
 	Server:        "tcp://127.0.0.1:1883",
@@ -87,12 +90,24 @@ type CacheConfig struct {
 }
 
 type MQTTConfig struct {
-	Server        string  `yaml:"server"`
-	TopicPath     string  `yaml:"topic_path"`
-	DeviceIDRegex *Regexp `yaml:"device_id_regex"`
-	User          string  `yaml:"user"`
-	Password      string  `yaml:"password"`
-	QoS           byte    `yaml:"qos"`
+	Server               string                `yaml:"server"`
+	TopicPath            string                `yaml:"topic_path"`
+	DeviceIDRegex        *Regexp               `yaml:"device_id_regex"`
+	User                 string                `yaml:"user"`
+	Password             string                `yaml:"password"`
+	QoS                  byte                  `yaml:"qos"`
+	ObjectPerTopicConfig *ObjectPerTopicConfig `yaml:"object_per_topic_config"`
+	MetricPerTopicConfig *MetricPerTopicConfig `yaml:"metric_per_topic_config"`
+}
+
+const EncodingJSON = "JSON"
+
+type ObjectPerTopicConfig struct {
+	Encoding string `yaml:"encoding"` // Currently only JSON is a valid value
+}
+
+type MetricPerTopicConfig struct {
+	MetricNameRegex *Regexp `yaml:"metric_name_regex"` // Default
 }
 
 // Metrics Config is a mapping between a metric send on mqtt to a prometheus metric
@@ -157,5 +172,23 @@ func LoadConfig(configFile string) (Config, error) {
 	if !validRegex {
 		return Config{}, fmt.Errorf("device id regex %q does not contain required regex group %q", cfg.MQTT.DeviceIDRegex.pattern, DeviceIDRegexGroup)
 	}
+	if cfg.MQTT.ObjectPerTopicConfig == nil && cfg.MQTT.MetricPerTopicConfig == nil {
+		cfg.MQTT.ObjectPerTopicConfig = &ObjectPerTopicConfig{
+			Encoding: EncodingJSON,
+		}
+	}
+
+	if cfg.MQTT.MetricPerTopicConfig != nil {
+		validRegex = false
+		for _, name := range cfg.MQTT.MetricPerTopicConfig.MetricNameRegex.RegEx().SubexpNames() {
+			if name == MetricNameRegexGroup {
+				validRegex = true
+			}
+		}
+		if !validRegex {
+			return Config{}, fmt.Errorf("metric name regex %q does not contain required regex group %q", cfg.MQTT.DeviceIDRegex.pattern, MetricNameRegexGroup)
+		}
+	}
+
 	return cfg, nil
 }

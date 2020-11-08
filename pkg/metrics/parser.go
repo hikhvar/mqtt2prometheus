@@ -16,6 +16,8 @@ type Parser struct {
 	metricConfigs map[string][]config.MetricConfig
 }
 
+var now = time.Now
+
 func NewParser(metrics []config.MetricConfig) Parser {
 	cfgs := make(map[string][]config.MetricConfig)
 	for i := range metrics {
@@ -43,6 +45,8 @@ func (p *Parser) validMetric(metric string, deviceID string) (config.MetricConfi
 	return config.MetricConfig{}, false
 }
 
+// parseMetric parses the given value according to the given deviceID and metricPath. The config allows to
+// parse a metric value according to the device ID.
 func (p *Parser) parseMetric(metricPath string, deviceID string, value interface{}) (Metric, error) {
 	cfg, cfgFound := p.validMetric(metricPath, deviceID)
 	if !cfgFound {
@@ -91,6 +95,6 @@ func (p *Parser) parseMetric(metricPath string, deviceID string, value interface
 		Description: cfg.PrometheusDescription(),
 		Value:       metricValue,
 		ValueType:   cfg.PrometheusValueType(),
-		IngestTime:  time.Now(),
+		IngestTime:  now(),
 	}, nil
 }

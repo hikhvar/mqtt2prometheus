@@ -54,11 +54,6 @@ var (
 	)
 )
 
-type Ingest interface {
-	MessageMetric() *prometheus.CounterVec
-	SetupSubscriptionHandler(errChan chan<- error) mqtt.MessageHandler
-}
-
 func main() {
 	flag.Parse()
 	if *versionFlag {

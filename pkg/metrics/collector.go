@@ -1,12 +1,12 @@
 package metrics
 
 import (
-	"go.uber.org/zap"
-	"time"
-
+	"fmt"
 	"github.com/hikhvar/mqtt2prometheus/pkg/config"
 	gocache "github.com/patrickmn/go-cache"
 	"github.com/prometheus/client_golang/prometheus"
+	"go.uber.org/zap"
+	"time"
 )
 
 const DefaultTimeout = 0
@@ -30,6 +30,11 @@ type Metric struct {
 	Topic       string
 }
 
+type CacheItem struct {
+	DeviceID string
+	Metric Metric
+}
+
 type MetricCollection []Metric
 
 func NewCollector(defaultTimeout time.Duration, possibleMetrics []config.MetricConfig, logger *zap.Logger) Collector {
@@ -45,10 +50,13 @@ func NewCollector(defaultTimeout time.Duration, possibleMetrics []config.MetricC
 }
 
 func (c *MemoryCachedCollector) Observe(deviceID string, collection MetricCollection) {
-	if len(collection) < 1 {
-		return
+	for _, m := range collection {
+		item := CacheItem{
+			DeviceID: deviceID, 
+			Metric: m,
+		}
+		c.cache.Set(fmt.Sprintf("%s-%s", deviceID, m.Description.String()), item, DefaultTimeout)
 	}
-	c.cache.Set(deviceID, collection, DefaultTimeout)
 }
 
 func (c *MemoryCachedCollector) Describe(ch chan<- *prometheus.Desc) {
@@ -58,20 +66,20 @@ func (c *MemoryCachedCollector) Describe(ch chan<- *prometheus.Desc) {
 }
 
 func (c *MemoryCachedCollector) Collect(mc chan<- prometheus.Metric) {
-	for device, metricsRaw := range c.cache.Items() {
-		metrics := metricsRaw.Object.(MetricCollection)
-		for _, metric := range metrics {
-			if metric.Description == nil {
-				c.logger.Warn("empty description", zap.String("topic", metric.Topic), zap.Float64("value", metric.Value))
-			}
-			m := prometheus.MustNewConstMetric(
-				metric.Description,
-				metric.ValueType,
-				metric.Value,
-				device,
-				metric.Topic,
-			)
-			mc <- prometheus.NewMetricWithTimestamp(metric.IngestTime, m)
+	for _, metricsRaw := range c.cache.Items() {
+		item := metricsRaw.Object.(CacheItem)
+		device, metric := item.DeviceID, item.Metric
+		if metric.Description == nil {
+			c.logger.Warn("empty description", zap.String("topic", metric.Topic), zap.Float64("value", metric.Value))
 		}
+		m := prometheus.MustNewConstMetric(
+			metric.Description,
+			metric.ValueType,
+			metric.Value,
+			device,
+			metric.Topic,
+		)
+		mc <- prometheus.NewMetricWithTimestamp(metric.IngestTime, m)
+
 	}
 }

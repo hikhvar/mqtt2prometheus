@@ -77,9 +77,12 @@ func main() {
 	mqttClientOptions.SetPassword(cfg.MQTT.Password)
 	mqttClientOptions.SetClientID(mustMQTTClientID())
 
-	collector := metrics.NewCollector(cfg.Cache.Timeout, cfg.Metrics)
-	ingest := metrics.NewIngest(collector, cfg.Metrics, cfg.MQTT.DeviceIDRegex)
-
+	collector := metrics.NewCollector(cfg.Cache.Timeout, cfg.Metrics, logger)
+	extractor, err := setupExtractor(cfg)
+	if err != nil {
+		logger.Fatal("could not setup a metric extractor", zap.Error(err))
+	}
+	ingest := metrics.NewIngest(collector, extractor, cfg.MQTT.DeviceIDRegex)
 	errorChan := make(chan error, 1)
 
 	for {
@@ -97,7 +100,7 @@ func main() {
 		time.Sleep(10 * time.Second)
 	}
 
-	prometheus.MustRegister(ingest.MessageMetric)
+	prometheus.MustRegister(ingest.MessageMetric())
 	prometheus.MustRegister(collector)
 	http.Handle("/metrics", promhttp.Handler())
 	go func() {
@@ -162,4 +165,20 @@ func mustSetupLogger() *zap.Logger {
 
 	config.SetProcessContext(logger)
 	return logger
+}
+
+func setupExtractor(cfg config.Config) (metrics.Extractor, error) {
+	parser := metrics.NewParser(cfg.Metrics)
+	if cfg.MQTT.ObjectPerTopicConfig != nil {
+		switch cfg.MQTT.ObjectPerTopicConfig.Encoding {
+		case config.EncodingJSON:
+			return metrics.NewJSONObjectExtractor(parser), nil
+		default:
+			return nil, fmt.Errorf("unsupported object format: %s", cfg.MQTT.ObjectPerTopicConfig.Encoding)
+		}
+	}
+	if cfg.MQTT.MetricPerTopicConfig != nil {
+		return metrics.NewMetricPerTopicExtractor(parser, cfg.MQTT.MetricPerTopicConfig.MetricNameRegex), nil
+	}
+	return nil, fmt.Errorf("no extractor configured")
 }

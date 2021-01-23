@@ -1,0 +1,43 @@
+mqtt:
+  server: tcp://mosquitto:1883
+  topic_path: shellies/+/sensor/+
+  device_id_regex: "shellies/(?P<deviceid>.*)/sensor"
+  metric_per_topic_config:
+    metric_name_regex: "shellies/(?P<deviceid>.*)/sensor/(?P<metricname>.*)"
+  qos: 0
+  cache:
+    timeout: 24h
+metrics:
+  - prom_name: temperature
+    # The name of the metric in a MQTT JSON message
+    mqtt_name: temperature
+    # The prometheus help text for this metric
+    help: shelly temperature reading
+    # The prometheus type for this metric. Valid values are: "gauge" and "counter"
+    type: gauge
+    # A map of string to string for constant labels. This labels will be attached to every prometheus metric
+    const_labels:
+      sensor_type: shelly
+    # The name of the metric in prometheus
+  - prom_name: humidity
+    # The name of the metric in a MQTT JSON message
+    mqtt_name: humidity
+    # The prometheus help text for this metric
+    help: shelly humidity reading
+    # The prometheus type for this metric. Valid values are: "gauge" and "counter"
+    type: gauge
+    # A map of string to string for constant labels. This labels will be attached to every prometheus metric
+    const_labels:
+      sensor_type: shelly
+    # The name of the metric in prometheus
+  - prom_name: battery
+    # The name of the metric in a MQTT JSON message
+    mqtt_name: battery
+    # The prometheus help text for this metric
+    help: shelly battery reading
+    # The prometheus type for this metric. Valid values are: "gauge" and "counter"
+    type: gauge
+    # A map of string to string for constant labels. This labels will be attached to every prometheus metric
+    const_labels:
+      sensor_type: shelly
+    # The name of the metric in prometheus

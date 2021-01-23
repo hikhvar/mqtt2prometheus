@@ -4,11 +4,15 @@ services:
     build:
       context: ../
       dockerfile: Dockerfile
+    command:
+      - /mqtt2prometheus
+      - -log-level
+      - debug
     ports:
       - 9641:9641
     volumes:
       - type: bind
-        source: ./mqtt2prometheus.yaml
+        source: ./${CONFIG:-dht22.yaml}
         target: /config.yaml
   mosquitto:
     image: eclipse-mosquitto:1.6.9

@@ -2,6 +2,7 @@ version: "3"
 services:
   gollum:
     build: .
+    image: stephens/mqtt2prometheus:latest
     restart: unless-stopped
     volumes:
       - ./config.yml:/config.yaml

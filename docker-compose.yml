@@ -1,0 +1,14 @@
+version: "3"
+services:
+  mqtt2prometheus:
+    build: .
+    image: stephens/mqtt2prometheus:latest
+    restart: unless-stopped
+    volumes:
+      - ./config.yml:/config.yaml
+    ports:
+      - "9641:9641"
+    command:
+      - /mqtt2prometheus
+      - -log-level
+      - debug

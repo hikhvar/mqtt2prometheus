@@ -1,0 +1,103 @@
+# Source: prometheus/templates/server/cm.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mqtt2prometheus-configmap
+  namespace: mqtt
+  labels:
+    app: mqtt2prometheus
+data:
+  config.yaml: |
+    # Settings for the MQTT Client. Currently only these three are supported
+    mqtt:
+      # The MQTT broker to connect to
+      server: tcp://10.3.3.2:1883
+      # Optional: Username and Password for authenticating with the MQTT Server
+      user: greg
+      password: my7Q7XeiHW5P
+      # The Topic path to subscribe to. Be aware that you have to specify the wildcard.
+      topic_path: tele/+/+/+/SENSOR
+      device_id_regex: tele/(?P<deviceid>.*)/SENSOR
+      #
+      # tele/gigharbor/outside/luftdaten/SENSOR {"Time":"2021-01-25T09:59:24","BME280":{"Temperature":39.7,"Humidity":90.5,"DewPoint":37.1,"Pressure":1001.6},"SDS0X1":{"PM2.5":1.4,"PM10":2.6},"PressureUnit":"hPa","TempUnit":"F"}
+      # tele/redding/outside/luftdaten/SENSOR {"Time":"2021-01-25T09:59:03","SDS0X1":{"PM2.5":0.7,"PM10":2.1}}
+      # tele/seattle/bnlink/grow-lights/SENSOR {"Time":"2021-01-25T10:00:01","ENERGY":{"TotalStartTime":"2020-09-06T04:28:16","Total":183.165,"Yesterday":1.124,"Today":0.000,"Period":0,"Power":0,"ApparentPower":0,"ReactivePower":0,"Factor":0.00,"Voltage":0,"Current":0.000}}
+      #
+      # Optional: Regular expression to extract the device ID from the topic path. The default regular expression, assumes
+      # that the last "element" of the topic_path is the device id.
+      # The regular expression must contain a named capture group with the name deviceid
+      # For example the expression for tasamota based sensors is "tele/(?P<deviceid>.*)/.*"
+      # device_id_regex: "(.*/)?(?P<deviceid>.*)"
+      # The MQTT QoS level
+      qos: 0
+    cache:
+      # Timeout. Each received metric will be presented for this time if no update is send via MQTT.
+      # Set the timeout to -1 to disable the deletion of metrics from the cache. The exporter presents the ingest timestamp
+      # to prometheus.
+      timeout: 24h
+    # This is a list of valid metrics. Only metrics listed here will be exported
+    metrics:
+      - prom_name: consumed_energy_kilowatthours_total
+        mqtt_name: "ENERGY.Total"
+        help: "total measured kilowatthours since flash"
+        type: counter
+      - prom_name: voltage_volts
+        mqtt_name: "ENERGY.Voltage"
+        help: "Currently measured voltage"
+        type: gauge
+      - prom_name: current_amperes
+        mqtt_name: "ENERGY.Current"
+        help: "Currently measured current"
+        type: gauge
+      - prom_name: power_watts
+        mqtt_name: "ENERGY.Power"
+        help: "Currently measured power"
+        type: gauge
+      - prom_name: apparent_power_watt
+        mqtt_name: "ENERGY.ApparentPower"
+        help: "Currently apparent power"
+        type: gauge
+      - prom_name: reactive_power_watt
+        mqtt_name: "ENERGY.ReactivePower"
+        help: "Currently reactive power"
+        type: gauge
+        const_labels:
+          sensor_type: bme280
+      - prom_name: temperature_f
+        mqtt_name: "BME280.Temperature"
+        help: Temperature
+        type: gauge
+        # The name of the metric in prometheus
+      - prom_name: humidity
+        mqtt_name: "BME280.Humidity"
+        help: Humidity
+        # The prometheus type for this metric. Valid values are: "gauge" and "counter"
+        type: gauge
+        # A map of string to string for constant labels. This labels will be attached to every prometheus metric
+        const_labels:
+          sensor_type: bme280
+        # The name of the metric in prometheus
+      - prom_name: pressure
+        mqtt_name: "BME280.Pressure"
+        help: Pressure
+        type: gauge
+        const_labels:
+          sensor_type: bme280
+      - prom_name: dew_point
+        mqtt_name: "BME280.DewPoint"
+        help: DewPoint
+        type: gauge
+        const_labels:
+          sensor_type: bme280
+      - prom_name: pm2_5
+        mqtt_name: "SDS0X1.PM2.5"
+        help: PM 2.5
+        type: gauge
+        const_labels:
+          sensor_type: sds0x1
+      - prom_name: pm10
+        mqtt_name: "SDS0X1.PM10"
+        help: PM 10
+        type: gauge
+        const_labels:
+          sensor_type: sds0x1

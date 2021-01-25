@@ -2,3 +2,7 @@ config.yaml
 bin/
 vendor
 dist
+config.yml
+# VSCode related
+.vscode
+.history

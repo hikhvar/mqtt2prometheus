@@ -1,0 +1,77 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mqtt2prometheus
+  namespace: mqtt
+  annotations:
+    kompose.cmd: kompose convert -f ../docker-compose.yml
+    kompose.version: 1.21.0 ()
+  labels:
+    io.kompose.service: mqtt2prometheus
+spec:
+  type: LoadBalancer
+  ports:
+  - name: metrics
+    port: 9641
+    targetPort: 9641
+  selector:
+    io.kompose.service: mqtt2prometheus
+status:
+  loadBalancer: {}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mqtt2prometheus
+  namespace: mqtt
+  annotations:
+    kompose.cmd: kompose convert -f ../docker-compose.yml
+    kompose.version: 1.21.0 ()
+  creationTimestamp: null
+  labels:
+    io.kompose.service: mqtt2prometheus
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: mqtt2prometheus
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert -f ../docker-compose.yml
+        kompose.version: 1.21.0 ()
+      creationTimestamp: null
+      labels:
+        io.kompose.service: mqtt2prometheus
+    spec:
+      containers:
+      - args:
+        - /mqtt2prometheus
+        - -config
+        - /data/config.yaml
+        - -log-level
+        - debug
+        image: stephens/mqtt2prometheus:latest
+        imagePullPolicy: ""
+        name: mqtt2prometheus
+        ports:
+        - containerPort: 9641
+        resources: {}
+        volumeMounts:
+        - name: config-volume
+          mountPath: /data
+#          subPath: config.yaml
+      restartPolicy: Always
+      serviceAccountName: ""
+      volumes:
+      - name: config-volume
+        configMap:
+          name: mqtt2prometheus-configmap
+
+#      volumes:
+#      - name: mqtt2prometheus-claim0
+#        persistentVolumeClaim:
+#          claimName: mqtt2prometheus-claim0

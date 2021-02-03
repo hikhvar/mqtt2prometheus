@@ -29,6 +29,9 @@ builds:
     - arm
     - arm64
     - 386
+    - riscv64
+    - ppc64le
+    - s390x
 
   # GOARM to build for when GOARCH is arm.
   # For more info refer to: https://golang.org/doc/install/source#environment
@@ -63,15 +66,6 @@ changelog:
     - '^test:'
 
 dockers:
-  # TODO: Create Manifests for this
-  # TODO: Add arm6, arm7 and i386
-  # - dockerfile: release/Dockerfile.scratch
-  #  image_templates:
-  #    - "hikhvar/mqtt2prometheus:latest"
-  #    - "docker.pkg.github.com/hikhvar/mqtt2prometheus/mqtt2prometheus:{{ .Tag }}"
-  #    - "docker.pkg.github.com/hikhvar/mqtt2prometheus/mqtt2prometheus:latest"
-  #    - "ghcr.io/hikhvar/mqtt2prometheus:{{ .Tag }}"
-  #    - "ghcr.io/hikhvar/mqtt2prometheus:latest"
 
   - dockerfile: release/Dockerfile.scratch
     goos: linux
@@ -82,8 +76,6 @@ dockers:
     image_templates:
       - "hikhvar/mqtt2prometheus:{{ .Tag }}-amd64"
       - "hikhvar/mqtt2prometheus:latest-amd64"
-      - "docker.pkg.github.com/hikhvar/mqtt2prometheus/mqtt2prometheus:{{ .Tag }}-amd64"
-      - "docker.pkg.github.com/hikhvar/mqtt2prometheus/mqtt2prometheus:latest-amd64"
       - "ghcr.io/hikhvar/mqtt2prometheus:{{ .Tag }}-amd64"
       - "ghcr.io/hikhvar/mqtt2prometheus:latest-amd64"
 
@@ -96,8 +88,6 @@ dockers:
     image_templates:
       - "hikhvar/mqtt2prometheus:{{ .Tag }}-arm64"
       - "hikhvar/mqtt2prometheus:latest-arm64"
-      - "docker.pkg.github.com/hikhvar/mqtt2prometheus/mqtt2prometheus:{{ .Tag }}-arm64"
-      - "docker.pkg.github.com/hikhvar/mqtt2prometheus/mqtt2prometheus:latest-arm64"
       - "ghcr.io/hikhvar/mqtt2prometheus:{{ .Tag }}-arm64"
       - "ghcr.io/hikhvar/mqtt2prometheus:latest-arm64"
 
@@ -111,22 +101,93 @@ dockers:
     image_templates:
       - "hikhvar/mqtt2prometheus:{{ .Tag }}-arm6"
       - "hikhvar/mqtt2prometheus:latest-arm6"
-      - "docker.pkg.github.com/hikhvar/mqtt2prometheus/mqtt2prometheus:{{ .Tag }}-arm6"
-      - "docker.pkg.github.com/hikhvar/mqtt2prometheus/mqtt2prometheus:latest-arm6"
       - "ghcr.io/hikhvar/mqtt2prometheus:{{ .Tag }}-arm6"
       - "ghcr.io/hikhvar/mqtt2prometheus:latest-arm6"
 
-# .goreleaser.yml
-docker_manifests:
-  # You can have multiple Docker manifests.
-  -
-    # Name template for the manifest.
-    # Defaults to empty.
-    name_template: hikhvar/mqtt2prometheus:{{ .Tag }}
+  - dockerfile: release/Dockerfile.scratch
+    goos: linux
+    goarch: arm
+    goarm: 6
+    use_buildx: true
+    build_flag_templates:
+      - "--platform=linux/arm/v6"
+    image_templates:
+      - "hikhvar/mqtt2prometheus:{{ .Tag }}-arm6"
+      - "hikhvar/mqtt2prometheus:latest-arm6"
+      - "ghcr.io/hikhvar/mqtt2prometheus:{{ .Tag }}-arm6"
+      - "ghcr.io/hikhvar/mqtt2prometheus:latest-arm6"
 
-    # Image name templates to be added to this manifest.
-    # Defaults to empty.
+  - dockerfile: release/Dockerfile.scratch
+    goos: linux
+    goarch: arm
+    goarm: 7
+    use_buildx: true
+    build_flag_templates:
+      - "--platform=linux/arm/v7"
+    image_templates:
+      - "hikhvar/mqtt2prometheus:{{ .Tag }}-arm7"
+      - "hikhvar/mqtt2prometheus:latest-arm7"
+      - "ghcr.io/hikhvar/mqtt2prometheus:{{ .Tag }}-arm7"
+      - "ghcr.io/hikhvar/mqtt2prometheus:latest-arm7"
+
+  - dockerfile: release/Dockerfile.scratch
+    goos: linux
+    goarch: 386
+    use_buildx: true
+    build_flag_templates:
+      - "--platform=linux/386"
+    image_templates:
+      - "hikhvar/mqtt2prometheus:{{ .Tag }}-386"
+      - "hikhvar/mqtt2prometheus:latest-386"
+      - "ghcr.io/hikhvar/mqtt2prometheus:{{ .Tag }}-386"
+      - "ghcr.io/hikhvar/mqtt2prometheus:latest-386"
+
+  - dockerfile: release/Dockerfile.scratch
+    goos: linux
+    goarch: riscv64
+    use_buildx: true
+    build_flag_templates:
+      - "--platform=linux/riscv64"
+    image_templates:
+      - "hikhvar/mqtt2prometheus:{{ .Tag }}-riscv64"
+      - "hikhvar/mqtt2prometheus:latest-riscv64"
+      - "ghcr.io/hikhvar/mqtt2prometheus:{{ .Tag }}-riscv64"
+      - "ghcr.io/hikhvar/mqtt2prometheus:latest-riscv64"
+
+docker_manifests:
+  # Docker Registry
+  - name_template: hikhvar/mqtt2prometheus:{{ .Tag }}
     image_templates:
       - "hikhvar/mqtt2prometheus:{{ .Tag }}-amd64"
       - "hikhvar/mqtt2prometheus:{{ .Tag }}-arm64"
       - "hikhvar/mqtt2prometheus:{{ .Tag }}-arm6"
+      - "hikhvar/mqtt2prometheus:{{ .Tag }}-arm7"
+      - "hikhvar/mqtt2prometheus:{{ .Tag }}-riscv64"
+      - "hikhvar/mqtt2prometheus:{{ .Tag }}-386"
+
+  - name_template: hikhvar/mqtt2prometheus:latest
+    image_templates:
+      - "hikhvar/mqtt2prometheus:latest-amd64"
+      - "hikhvar/mqtt2prometheus:latest-arm64"
+      - "hikhvar/mqtt2prometheus:latest-arm6"
+      - "hikhvar/mqtt2prometheus:latest-arm7"
+      - "hikhvar/mqtt2prometheus:latest-riscv64"
+      - "hikhvar/mqtt2prometheus:latest-386"
+
+  # Github Registry
+  - name_template: ghcr.io/hikhvar/mqtt2prometheus:{{ .Tag }}
+    image_templates:
+      - "ghcr.io/hikhvar/mqtt2prometheus:{{ .Tag }}-amd64"
+      - "ghcr.io/hikhvar/mqtt2prometheus:{{ .Tag }}-arm64"
+      - "ghcr.io/hikhvar/mqtt2prometheus:{{ .Tag }}-arm6"
+      - "ghcr.io/hikhvar/mqtt2prometheus:{{ .Tag }}-arm7"
+      - "ghcr.io/hikhvar/mqtt2prometheus:{{ .Tag }}-riscv64"
+      - "ghcr.io/hikhvar/mqtt2prometheus:{{ .Tag }}-386"
+  - name_template: ghcr.io/hikhvar/mqtt2prometheus:lates
+    image_templates:
+      - "ghcr.io/hikhvar/mqtt2prometheus:lates-amd64"
+      - "ghcr.io/hikhvar/mqtt2prometheus:lates-arm64"
+      - "ghcr.io/hikhvar/mqtt2prometheus:lates-arm6"
+      - "ghcr.io/hikhvar/mqtt2prometheus:lates-arm7"
+      - "ghcr.io/hikhvar/mqtt2prometheus:lates-riscv64"
+      - "ghcr.io/hikhvar/mqtt2prometheus:lates-386"

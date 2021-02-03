@@ -76,6 +76,9 @@ dockers:
   - dockerfile: release/Dockerfile.scratch
     goos: linux
     goarch: amd64
+    use_buildx: true
+    build_flag_templates:
+      - "--platform=linux/amd64"
     image_templates:
       - "hikhvar/mqtt2prometheus:{{ .Tag }}-amd64"
       - "hikhvar/mqtt2prometheus:latest-amd64"
@@ -87,6 +90,9 @@ dockers:
   - dockerfile: release/Dockerfile.scratch
     goos: linux
     goarch: arm64
+    use_buildx: true
+    build_flag_templates:
+      - "--platform=linux/arm64"
     image_templates:
       - "hikhvar/mqtt2prometheus:{{ .Tag }}-arm64"
       - "hikhvar/mqtt2prometheus:latest-arm64"
@@ -98,14 +104,17 @@ dockers:
   - dockerfile: release/Dockerfile.scratch
     goos: linux
     goarch: arm
-    goarm: 5
+    goarm: 6
+    use_buildx: true
+    build_flag_templates:
+      - "--platform=linux/arm/v6"
     image_templates:
-      - "hikhvar/mqtt2prometheus:{{ .Tag }}-arm5"
-      - "hikhvar/mqtt2prometheus:latest-arm5"
-      - "docker.pkg.github.com/hikhvar/mqtt2prometheus/mqtt2prometheus:{{ .Tag }}-arm5"
-      - "docker.pkg.github.com/hikhvar/mqtt2prometheus/mqtt2prometheus:latest-arm5"
-      - "ghcr.io/hikhvar/mqtt2prometheus:{{ .Tag }}-arm5"
-      - "ghcr.io/hikhvar/mqtt2prometheus:latest-arm5"
+      - "hikhvar/mqtt2prometheus:{{ .Tag }}-arm6"
+      - "hikhvar/mqtt2prometheus:latest-arm6"
+      - "docker.pkg.github.com/hikhvar/mqtt2prometheus/mqtt2prometheus:{{ .Tag }}-arm6"
+      - "docker.pkg.github.com/hikhvar/mqtt2prometheus/mqtt2prometheus:latest-arm6"
+      - "ghcr.io/hikhvar/mqtt2prometheus:{{ .Tag }}-arm6"
+      - "ghcr.io/hikhvar/mqtt2prometheus:latest-arm6"
 
 # .goreleaser.yml
 docker_manifests:
@@ -120,4 +129,4 @@ docker_manifests:
     image_templates:
       - "hikhvar/mqtt2prometheus:{{ .Tag }}-amd64"
       - "hikhvar/mqtt2prometheus:{{ .Tag }}-arm64"
-      - "hikhvar/mqtt2prometheus:{{ .Tag }}-arm5"
+      - "hikhvar/mqtt2prometheus:{{ .Tag }}-arm6"

@@ -2,8 +2,8 @@ name: release
 
 on:
   push:
-    tags:
-      - '*'
+    branches: ["master"]
+  pull_request:
 
 jobs:
   goreleaser:
@@ -25,18 +25,8 @@ jobs:
         uses: docker/setup-qemu-action@v1
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
-        # Login to the registries
-      - name: Login to Github Packages
-        run: echo ${{ secrets.GITHUB_TOKEN }} | docker login docker.pkg.github.com -u ${{ github.actor }} --password-stdin
-      - name: Login to Dockerhub
-        run: echo ${{ secrets.DOCKERHUB_ACCESS_KEY }} | docker login -u hikhvar --password-stdin
-        # Github Registry does not support the github actions token
-      - name: Login to Github Registry
-        run: echo ${{secrets.PERSONAL_ACCESS_TOKEN }} | docker login ghcr.io -u hikhvar --password-stdin
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v1
         with:
           version: latest
-          args: release --rm-dist
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          args: release --rm-dist --skip-publish

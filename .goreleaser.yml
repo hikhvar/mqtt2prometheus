@@ -64,9 +64,44 @@ changelog:
 dockers:
   - dockerfile: release/Dockerfile.scratch
     image_templates:
-      - "hikhvar/mqtt2prometheus:{{ .Tag }}"
       - "hikhvar/mqtt2prometheus:latest"
       - "docker.pkg.github.com/hikhvar/mqtt2prometheus/mqtt2prometheus:{{ .Tag }}"
       - "docker.pkg.github.com/hikhvar/mqtt2prometheus/mqtt2prometheus:latest"
       - "ghcr.io/hikhvar/mqtt2prometheus:{{ .Tag }}"
       - "ghcr.io/hikhvar/mqtt2prometheus:latest"
+
+  - dockerfile: release/Dockerfile.scratch
+    goos: linux
+    goarch: amd64
+    image_templates:
+      - "hikhvar/mqtt2prometheus:{{ .Tag }}-amd64"
+      - "hikhvar/mqtt2prometheus:latest}-amd64"
+      - "docker.pkg.github.com/hikhvar/mqtt2prometheus/mqtt2prometheus:{{ .Tag }}}-amd64"
+      - "docker.pkg.github.com/hikhvar/mqtt2prometheus/mqtt2prometheus:latest}-amd64"
+      - "ghcr.io/hikhvar/mqtt2prometheus:{{ .Tag }}}-amd64"
+      - "ghcr.io/hikhvar/mqtt2prometheus:latest}-amd64"
+
+  - dockerfile: release/Dockerfile.scratch
+    goos: linux
+    goarch: arm64
+    image_templates:
+      - "hikhvar/mqtt2prometheus:{{ .Tag }}-arm64"
+      - "hikhvar/mqtt2prometheus:latest}-arm64"
+      - "docker.pkg.github.com/hikhvar/mqtt2prometheus/mqtt2prometheus:{{ .Tag }}}-arm64"
+      - "docker.pkg.github.com/hikhvar/mqtt2prometheus/mqtt2prometheus:latest}-arm64"
+      - "ghcr.io/hikhvar/mqtt2prometheus:{{ .Tag }}}-arm64"
+      - "ghcr.io/hikhvar/mqtt2prometheus:latest}-arm64"
+
+# .goreleaser.yml
+docker_manifests:
+  # You can have multiple Docker manifests.
+  -
+    # Name template for the manifest.
+    # Defaults to empty.
+    name_template: hikhvar/mqtt2prometheus:{{ .Tag }}
+
+    # Image name templates to be added to this manifest.
+    # Defaults to empty.
+    image_templates:
+      - "hikhvar/mqtt2prometheus:{{ .Tag }}-amd64"
+      - "hikhvar/mqtt2prometheus:{{ .Tag }}-arm64"

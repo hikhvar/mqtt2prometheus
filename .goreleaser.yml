@@ -183,11 +183,11 @@ docker_manifests:
       - "ghcr.io/hikhvar/mqtt2prometheus:{{ .Tag }}-arm7"
       - "ghcr.io/hikhvar/mqtt2prometheus:{{ .Tag }}-riscv64"
       - "ghcr.io/hikhvar/mqtt2prometheus:{{ .Tag }}-386"
-  - name_template: ghcr.io/hikhvar/mqtt2prometheus:lates
+  - name_template: ghcr.io/hikhvar/mqtt2prometheus:latest
     image_templates:
-      - "ghcr.io/hikhvar/mqtt2prometheus:lates-amd64"
-      - "ghcr.io/hikhvar/mqtt2prometheus:lates-arm64"
-      - "ghcr.io/hikhvar/mqtt2prometheus:lates-arm6"
-      - "ghcr.io/hikhvar/mqtt2prometheus:lates-arm7"
-      - "ghcr.io/hikhvar/mqtt2prometheus:lates-riscv64"
-      - "ghcr.io/hikhvar/mqtt2prometheus:lates-386"
+      - "ghcr.io/hikhvar/mqtt2prometheus:latest-amd64"
+      - "ghcr.io/hikhvar/mqtt2prometheus:latest-arm64"
+      - "ghcr.io/hikhvar/mqtt2prometheus:latest-arm6"
+      - "ghcr.io/hikhvar/mqtt2prometheus:latest-arm7"
+      - "ghcr.io/hikhvar/mqtt2prometheus:latest-riscv64"
+      - "ghcr.io/hikhvar/mqtt2prometheus:latest-386"

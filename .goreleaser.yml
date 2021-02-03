@@ -63,24 +63,26 @@ changelog:
     - '^test:'
 
 dockers:
-  - dockerfile: release/Dockerfile.scratch
-    image_templates:
-      - "hikhvar/mqtt2prometheus:latest"
-      - "docker.pkg.github.com/hikhvar/mqtt2prometheus/mqtt2prometheus:{{ .Tag }}"
-      - "docker.pkg.github.com/hikhvar/mqtt2prometheus/mqtt2prometheus:latest"
-      - "ghcr.io/hikhvar/mqtt2prometheus:{{ .Tag }}"
-      - "ghcr.io/hikhvar/mqtt2prometheus:latest"
+  # TODO: Create Manifests for this
+  # TODO: Add arm6, arm7 and i386
+  # - dockerfile: release/Dockerfile.scratch
+  #  image_templates:
+  #    - "hikhvar/mqtt2prometheus:latest"
+  #    - "docker.pkg.github.com/hikhvar/mqtt2prometheus/mqtt2prometheus:{{ .Tag }}"
+  #    - "docker.pkg.github.com/hikhvar/mqtt2prometheus/mqtt2prometheus:latest"
+  #    - "ghcr.io/hikhvar/mqtt2prometheus:{{ .Tag }}"
+  #    - "ghcr.io/hikhvar/mqtt2prometheus:latest"
 
   - dockerfile: release/Dockerfile.scratch
     goos: linux
     goarch: amd64
     image_templates:
       - "hikhvar/mqtt2prometheus:{{ .Tag }}-amd64"
-      - "hikhvar/mqtt2prometheus:latest}-amd64"
-      - "docker.pkg.github.com/hikhvar/mqtt2prometheus/mqtt2prometheus:{{ .Tag }}}-amd64"
-      - "docker.pkg.github.com/hikhvar/mqtt2prometheus/mqtt2prometheus:latest}-amd64"
-      - "ghcr.io/hikhvar/mqtt2prometheus:{{ .Tag }}}-amd64"
-      - "ghcr.io/hikhvar/mqtt2prometheus:latest}-amd64"
+      - "hikhvar/mqtt2prometheus:latest-amd64"
+      - "docker.pkg.github.com/hikhvar/mqtt2prometheus/mqtt2prometheus:{{ .Tag }}-amd64"
+      - "docker.pkg.github.com/hikhvar/mqtt2prometheus/mqtt2prometheus:latest-amd64"
+      - "ghcr.io/hikhvar/mqtt2prometheus:{{ .Tag }}-amd64"
+      - "ghcr.io/hikhvar/mqtt2prometheus:latest-amd64"
 
   - dockerfile: release/Dockerfile.scratch
     goos: linux

@@ -87,10 +87,10 @@ dockers:
     image_templates:
       - "hikhvar/mqtt2prometheus:{{ .Tag }}-arm64"
       - "hikhvar/mqtt2prometheus:latest}-arm64"
-      - "docker.pkg.github.com/hikhvar/mqtt2prometheus/mqtt2prometheus:{{ .Tag }}}-arm64"
-      - "docker.pkg.github.com/hikhvar/mqtt2prometheus/mqtt2prometheus:latest}-arm64"
-      - "ghcr.io/hikhvar/mqtt2prometheus:{{ .Tag }}}-arm64"
-      - "ghcr.io/hikhvar/mqtt2prometheus:latest}-arm64"
+      - "docker.pkg.github.com/hikhvar/mqtt2prometheus/mqtt2prometheus:{{ .Tag }}-arm64"
+      - "docker.pkg.github.com/hikhvar/mqtt2prometheus/mqtt2prometheus:latest-arm64"
+      - "ghcr.io/hikhvar/mqtt2prometheus:{{ .Tag }}-arm64"
+      - "ghcr.io/hikhvar/mqtt2prometheus:latest-arm64"
 
 # .goreleaser.yml
 docker_manifests:

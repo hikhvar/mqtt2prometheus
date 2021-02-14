@@ -21,7 +21,7 @@ const (
 var MQTTConfigDefaults = MQTTConfig{
 	Server:        "tcp://127.0.0.1:1883",
 	TopicPath:     "v1/devices/me",
-	DeviceIDRegex: mustNewRegexp(fmt.Sprintf("(.*/)?(?P<%s>.*)", DeviceIDRegexGroup)),
+	DeviceIDRegex: MustNewRegexp(fmt.Sprintf("(.*/)?(?P<%s>.*)", DeviceIDRegexGroup)),
 	QoS:           0,
 }
 
@@ -72,7 +72,7 @@ func (rf *Regexp) RegEx() *regexp.Regexp {
 	return rf.r
 }
 
-func mustNewRegexp(pattern string) *Regexp {
+func MustNewRegexp(pattern string) *Regexp {
 	return &Regexp{
 		pattern: pattern,
 		r:       regexp.MustCompile(pattern),

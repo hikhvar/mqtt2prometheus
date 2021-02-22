@@ -1,9 +1,15 @@
 [Unit]
 Description=Simple translator from mqtt messages to prometheus. Analog to pushgateway
+Documentation=https://github.com/hikhvar/mqtt2prometheus
 Before=prometheus.service
 
 [Service]
-ExecStart=/opt/mqtt2prometheus/mqtt2prometheus -config /etc/mqtt2prometheus/config.yaml -port 8002
+Restart=always
+User=mqtt2prometheus
+EnvironmentFile=/etc/default/prometheus-mqtt-exporter
+ExecStart=/opt/mqtt2prometheus/mqtt2prometheus -config /etc/mqtt2prometheus/config.yaml $ARGS
+TimeoutStopSec=20s
+
 
 [Install]
 WantedBy=multi-user.target

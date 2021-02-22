@@ -64,6 +64,31 @@ changelog:
     exclude:
     - '^docs:'
     - '^test:'
+    - '^ci:'
+
+nfpms:
+  - id: default
+    vendor: Christoph Petrausch
+    homepage: https://github.com/hikhvar/mqtt2prometheus
+    description: This exporter translates from MQTT topics to prometheus metrics.
+    license: MIT License
+    formats:
+      - deb
+      - rpm
+      - apk
+    conflicts:
+      - prometheus-mqtt-exporter
+    scripts:
+      postinstall: systemd/postinstall.sh
+    contents:
+      # Simple config file
+      - src: config.yaml.dist
+        dst: /etc/mqtt2prometheus/config.yaml
+        type: config
+      - src: ./systemd/mqtt2prometheus.service
+        dst: /etc/systemd/system/mqtt2prometheus.service
+        type: config
+
 
 dockers:
 

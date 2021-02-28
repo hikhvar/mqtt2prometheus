@@ -47,8 +47,9 @@ Only the latest two Go major versions are tested and supported.
 
 To start the public available image run:
 ```bash
-docker run -it -v "$(pwd)/config.yaml:/config.yaml"  -p  9641:9641 docker.pkg.github.com/hikhvar/mqtt2prometheus/mqtt2prometheus:latest 
+docker run -it -v "$(pwd)/config.yaml:/config.yaml"  -p  9641:9641 ghcr.io/hikhvar/mqtt2prometheus:latest 
 ```
+Please have a look at the [latest relase](https://github.com/hikhvar/mqtt2prometheus/releases/latest) to get a stable image tag. The latest tag may break at any moment in time since latest is pushed into the registries on every git commit in the master branch. 
 
 #### Build The Image locally
 To build a docker container with the mqtt2prometheus exporter included run:

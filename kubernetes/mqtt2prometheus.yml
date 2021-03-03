@@ -43,7 +43,7 @@ spec:
         - /data/config.yaml
         - -log-level
         - debug
-        image: stephens/mqtt2prometheus:latest
+        image: ghcr.io/hikhvar/mqtt2prometheus:latest
         imagePullPolicy: ""
         name: mqtt2prometheus
         ports:
@@ -55,12 +55,3 @@ spec:
 #          subPath: config.yaml
       restartPolicy: Always
       serviceAccountName: ""
-      volumes:
-      - name: config-volume
-        configMap:
-          name: mqtt2prometheus-configmap
-
-#      volumes:
-#      - name: mqtt2prometheus-claim0
-#        persistentVolumeClaim:
-#          claimName: mqtt2prometheus-claim0

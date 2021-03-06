@@ -61,7 +61,7 @@ func (rf *Regexp) GroupValue(s string, groupName string) string {
 	match := rf.r.FindStringSubmatch(s)
 	groupValues := make(map[string]string)
 	for i, name := range rf.r.SubexpNames() {
-		if name != "" {
+		if len(match) > i && name != "" {
 			groupValues[name] = match[i]
 		}
 	}

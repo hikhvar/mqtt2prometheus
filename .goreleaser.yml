@@ -92,7 +92,7 @@ nfpms:
 
 dockers:
 
-  - dockerfile: release/Dockerfile.scratch
+  - dockerfile: release/Dockerfile
     goos: linux
     goarch: amd64
     use_buildx: true
@@ -104,7 +104,7 @@ dockers:
       - "ghcr.io/hikhvar/mqtt2prometheus:{{ .Tag }}-amd64"
       - "ghcr.io/hikhvar/mqtt2prometheus:latest-amd64"
 
-  - dockerfile: release/Dockerfile.scratch
+  - dockerfile: release/Dockerfile
     goos: linux
     goarch: arm64
     use_buildx: true
@@ -116,7 +116,7 @@ dockers:
       - "ghcr.io/hikhvar/mqtt2prometheus:{{ .Tag }}-arm64"
       - "ghcr.io/hikhvar/mqtt2prometheus:latest-arm64"
 
-  - dockerfile: release/Dockerfile.scratch
+  - dockerfile: release/Dockerfile
     goos: linux
     goarch: arm
     goarm: 6
@@ -129,7 +129,7 @@ dockers:
       - "ghcr.io/hikhvar/mqtt2prometheus:{{ .Tag }}-arm6"
       - "ghcr.io/hikhvar/mqtt2prometheus:latest-arm6"
 
-  - dockerfile: release/Dockerfile.scratch
+  - dockerfile: release/Dockerfile
     goos: linux
     goarch: arm
     goarm: 6
@@ -142,7 +142,7 @@ dockers:
       - "ghcr.io/hikhvar/mqtt2prometheus:{{ .Tag }}-arm6"
       - "ghcr.io/hikhvar/mqtt2prometheus:latest-arm6"
 
-  - dockerfile: release/Dockerfile.scratch
+  - dockerfile: release/Dockerfile
     goos: linux
     goarch: arm
     goarm: 7
@@ -155,7 +155,7 @@ dockers:
       - "ghcr.io/hikhvar/mqtt2prometheus:{{ .Tag }}-arm7"
       - "ghcr.io/hikhvar/mqtt2prometheus:latest-arm7"
 
-  - dockerfile: release/Dockerfile.scratch
+  - dockerfile: release/Dockerfile
     goos: linux
     goarch: 386
     use_buildx: true
@@ -167,7 +167,7 @@ dockers:
       - "ghcr.io/hikhvar/mqtt2prometheus:{{ .Tag }}-386"
       - "ghcr.io/hikhvar/mqtt2prometheus:latest-386"
 
-  - dockerfile: release/Dockerfile.scratch
+  - dockerfile: release/Dockerfile
     goos: linux
     goarch: riscv64
     use_buildx: true

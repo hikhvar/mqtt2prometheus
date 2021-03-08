@@ -1,4 +1,0 @@
-FROM scratch
-
-COPY mqtt2prometheus /mqtt2prometheus
-CMD ["/mqtt2prometheus"]

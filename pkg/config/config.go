@@ -49,11 +49,14 @@ func (rf *Regexp) UnmarshalYAML(unmarshal func(interface{}) error) error {
 }
 
 func (rf *Regexp) MarshalYAML() (interface{}, error) {
+	if rf == nil {
+		return "", nil
+	}
 	return rf.pattern, nil
 }
 
 func (rf *Regexp) Match(s string) bool {
-	return rf.r == nil || rf.r.MatchString(s)
+	return rf == nil || rf.r == nil || rf.r.MatchString(s)
 }
 
 // GroupValue returns the value of the given group. If the group is not part of the underlying regexp, returns the empty string.

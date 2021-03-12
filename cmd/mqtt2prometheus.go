@@ -197,8 +197,11 @@ func setupExtractor(cfg config.Config) (metrics.Extractor, error) {
 
 func newTlsConfig(cfg config.Config) (*tls.Config, error) {
 	certpool := x509.NewCertPool()
-	pemCerts, err := ioutil.ReadFile(cfg.MQTT.CACert)
-	if err == nil {
+	if cfg.MQTT.CACert != "" {
+		pemCerts, err := ioutil.ReadFile(cfg.MQTT.CACert)
+		if err != nil {
+			return nil, err
+		}
 		certpool.AppendCertsFromPEM(pemCerts)
 	}
 

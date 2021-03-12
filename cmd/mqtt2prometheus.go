@@ -6,14 +6,15 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"time"
 
-	"github.com/eclipse/paho.mqtt.golang"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+
+	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/hikhvar/mqtt2prometheus/pkg/config"
 	"github.com/hikhvar/mqtt2prometheus/pkg/metrics"
 	"github.com/hikhvar/mqtt2prometheus/pkg/mqttclient"
@@ -75,14 +76,14 @@ func main() {
 	mqttClientOptions.SetUsername(cfg.MQTT.User)
 	mqttClientOptions.SetPassword(cfg.MQTT.Password)
 
-	if  cfg.MQTT.ClientID != "" {
+	if cfg.MQTT.ClientID != "" {
 		mqttClientOptions.SetClientID(cfg.MQTT.ClientID)
 	} else {
 		mqttClientOptions.SetClientID(mustMQTTClientID())
 	}
 
 	if cfg.MQTT.ClientCert != "" || cfg.MQTT.ClientKey != "" {
-		tlsconfig, err := newTlsConfig(cfg)
+		tlsconfig, err := newTLSConfig(cfg)
 		if err != nil {
 			logger.Fatal("Invalid tls certificate settings", zap.Error(err))
 		}
@@ -195,29 +196,29 @@ func setupExtractor(cfg config.Config) (metrics.Extractor, error) {
 	return nil, fmt.Errorf("no extractor configured")
 }
 
-func newTlsConfig(cfg config.Config) (*tls.Config, error) {
+func newTLSConfig(cfg config.Config) (*tls.Config, error) {
 	certpool := x509.NewCertPool()
 	if cfg.MQTT.CACert != "" {
 		pemCerts, err := ioutil.ReadFile(cfg.MQTT.CACert)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to load ca_cert file: %w", err)
 		}
 		certpool.AppendCertsFromPEM(pemCerts)
 	}
 
 	cert, err := tls.LoadX509KeyPair(cfg.MQTT.ClientCert, cfg.MQTT.ClientKey)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to load client certificate: %w", err)
 	}
 
 	cert.Leaf, err = x509.ParseCertificate(cert.Certificate[0])
 	if err != nil {
-		panic(fmt.Sprintf("could not parse certificate: %v", err))
+		return nil, fmt.Errorf("failed to parse client certificate: %w", err)
 	}
 
 	return &tls.Config{
-		RootCAs: certpool,
+		RootCAs:            certpool,
 		InsecureSkipVerify: false,
-		Certificates: []tls.Certificate{cert},
+		Certificates:       []tls.Certificate{cert},
 	}, nil
 }

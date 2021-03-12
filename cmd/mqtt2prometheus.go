@@ -1,11 +1,14 @@
 package main
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"flag"
 	"fmt"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"time"
@@ -63,19 +66,23 @@ func main() {
 	logger := mustSetupLogger()
 	defer logger.Sync() //nolint:errcheck
 	c := make(chan os.Signal, 1)
-	hostName, err := os.Hostname()
-	if err != nil {
-		logger.Fatal("Could not get hostname", zap.Error(err))
-	}
 	cfg, err := config.LoadConfig(*configFlag)
 	if err != nil {
 		logger.Fatal("Could not load config", zap.Error(err))
 	}
 	mqttClientOptions := mqtt.NewClientOptions()
-	mqttClientOptions.AddBroker(cfg.MQTT.Server).SetClientID(hostName).SetCleanSession(true)
+	mqttClientOptions.AddBroker(cfg.MQTT.Server).SetCleanSession(true)
 	mqttClientOptions.SetUsername(cfg.MQTT.User)
 	mqttClientOptions.SetPassword(cfg.MQTT.Password)
-	mqttClientOptions.SetClientID(mustMQTTClientID())
+
+	if  cfg.MQTT.ClientID != "" {
+		mqttClientOptions.SetClientID(cfg.MQTT.ClientID)
+	} else {
+		mqttClientOptions.SetClientID(mustMQTTClientID())
+	}
+
+	tlsconfig := newTlsConfig(cfg)
+	mqttClientOptions.SetTLSConfig(tlsconfig)
 
 	collector := metrics.NewCollector(cfg.Cache.Timeout, cfg.Metrics, logger)
 	extractor, err := setupExtractor(cfg)
@@ -181,4 +188,28 @@ func setupExtractor(cfg config.Config) (metrics.Extractor, error) {
 		return metrics.NewMetricPerTopicExtractor(parser, cfg.MQTT.MetricPerTopicConfig.MetricNameRegex), nil
 	}
 	return nil, fmt.Errorf("no extractor configured")
+}
+
+func newTlsConfig(cfg config.Config) *tls.Config {
+	certpool := x509.NewCertPool()
+	pemCerts, err := ioutil.ReadFile(cfg.MQTT.CACert)
+	if err == nil {
+		certpool.AppendCertsFromPEM(pemCerts)
+	}
+
+	cert, err := tls.LoadX509KeyPair(cfg.MQTT.ClientCert, cfg.MQTT.ClientKey)
+	if err != nil {
+		return &tls.Config{}
+	}
+
+	cert.Leaf, err = x509.ParseCertificate(cert.Certificate[0])
+	if err != nil {
+		panic(err)
+	}
+
+	return &tls.Config{
+		RootCAs: certpool,
+		InsecureSkipVerify: false,
+		Certificates: []tls.Certificate{cert},
+	}
 }

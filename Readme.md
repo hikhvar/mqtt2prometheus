@@ -97,23 +97,34 @@ The config file can look like this:
 mqtt:
   # The MQTT broker to connect to
   server: tcp://127.0.0.1:1883
-  # The Topic path to subscribe to. Be aware that you have to specify the wildcard. 
+  # Optional: Username and Password for authenticating with the MQTT Server
+  # user: bob
+  # password: happylittleclouds
+  # Optional: for TLS client certificates
+  # ca_cert: certs/AmazonRootCA1.pem
+  # client_cert: certs/xxxxx-certificate.pem.crt
+  # client_key: certs/xxxxx-private.pem.key
+  # Optional: Used to specify ClientID. The default is <hostname>-<pid>
+  # client_id: somedevice
+  # The Topic path to subscribe to. Be aware that you have to specify the wildcard.
   topic_path: v1/devices/me/+
   # Optional: Regular expression to extract the device ID from the topic path. The default regular expression, assumes
   # that the last "element" of the topic_path is the device id.
   # The regular expression must contain a named capture group with the name deviceid
   # For example the expression for tasamota based sensors is "tele/(?P<deviceid>.*)/.*"
-  device_id_regex: "(.*/)?(?P<deviceid>.*)"
+  # device_id_regex: "(.*/)?(?P<deviceid>.*)"
   # The MQTT QoS level
   qos: 0
 cache:
-  # Timeout. Each received metric will be presented for this time if no update is send via MQTT
+  # Timeout. Each received metric will be presented for this time if no update is send via MQTT.
+  # Set the timeout to -1 to disable the deletion of metrics from the cache. The exporter presents the ingest timestamp
+  # to prometheus.
   timeout: 24h
 # This is a list of valid metrics. Only metrics listed here will be exported
 metrics:
     # The name of the metric in prometheus
-  - prom_name: temperature_celsius
-    # The name of the metric in a MQTT JSON message. This can be an arbitrary gojsonq path.
+  - prom_name: temperature
+    # The name of the metric in a MQTT JSON message
     mqtt_name: temperature
     # The prometheus help text for this metric
     help: DHT22 temperature reading
@@ -135,15 +146,37 @@ metrics:
       sensor_type: dht22
     # The name of the metric in prometheus
   - prom_name: heat_index
-    # The name of the metric in a MQTT JSON message. Here a nested field.
-    mqtt_name: computed.heat_index
+    # The name of the metric in a MQTT JSON message
+    mqtt_name: heat_index
     # The prometheus help text for this metric
     help: DHT22 heatIndex calculation
     # The prometheus type for this metric. Valid values are: "gauge" and "counter"
     type: gauge
     # A map of string to string for constant labels. This labels will be attached to every prometheus metric
     const_labels:
-      sensor_type: dht22%       
+      sensor_type: dht22
+    # The name of the metric in prometheus
+  - prom_name: state
+    # The name of the metric in a MQTT JSON message
+    mqtt_name: state
+    # Regular expression to only match sensors with the given name pattern
+    sensor_name_filter: "^.*-light$"
+    # The prometheus help text for this metric
+    help: Light state
+    # The prometheus type for this metric. Valid values are: "gauge" and "counter"
+    type: gauge
+    # A map of string to string for constant labels. This labels will be attached to every prometheus metric
+    const_labels:
+      sensor_type: ikea
+    # When specified, enables mapping between string values to metric values.
+    string_value_mapping:
+      # A map of string to metric value.
+      map:
+        off: 0
+        low: 0
+      # Metric value to use if a match cannot be found in the map above.
+      # If not specified, parsing error will occur.
+      error_value: 1      
 ```
 
 

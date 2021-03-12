@@ -81,8 +81,13 @@ func main() {
 		mqttClientOptions.SetClientID(mustMQTTClientID())
 	}
 
-	tlsconfig := newTlsConfig(cfg)
-	mqttClientOptions.SetTLSConfig(tlsconfig)
+	if cfg.MQTT.ClientCert != "" || cfg.MQTT.ClientKey != "" {
+		tlsconfig, err := newTlsConfig(cfg)
+		if err != nil {
+			logger.Fatal("Invalid tls certificate settings", zap.Error(err))
+		}
+		mqttClientOptions.SetTLSConfig(tlsconfig)
+	}
 
 	collector := metrics.NewCollector(cfg.Cache.Timeout, cfg.Metrics, logger)
 	extractor, err := setupExtractor(cfg)
@@ -190,7 +195,7 @@ func setupExtractor(cfg config.Config) (metrics.Extractor, error) {
 	return nil, fmt.Errorf("no extractor configured")
 }
 
-func newTlsConfig(cfg config.Config) *tls.Config {
+func newTlsConfig(cfg config.Config) (*tls.Config, error) {
 	certpool := x509.NewCertPool()
 	pemCerts, err := ioutil.ReadFile(cfg.MQTT.CACert)
 	if err == nil {
@@ -199,17 +204,17 @@ func newTlsConfig(cfg config.Config) *tls.Config {
 
 	cert, err := tls.LoadX509KeyPair(cfg.MQTT.ClientCert, cfg.MQTT.ClientKey)
 	if err != nil {
-		return &tls.Config{}
+		return nil, err
 	}
 
 	cert.Leaf, err = x509.ParseCertificate(cert.Certificate[0])
 	if err != nil {
-		panic(err)
+		panic(fmt.Sprintf("could not parse certificate: %v", err))
 	}
 
 	return &tls.Config{
 		RootCAs: certpool,
 		InsecureSkipVerify: false,
 		Certificates: []tls.Certificate{cert},
-	}
+	}, nil
 }

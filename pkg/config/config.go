@@ -101,6 +101,10 @@ type MQTTConfig struct {
 	QoS                  byte                  `yaml:"qos"`
 	ObjectPerTopicConfig *ObjectPerTopicConfig `yaml:"object_per_topic_config"`
 	MetricPerTopicConfig *MetricPerTopicConfig `yaml:"metric_per_topic_config"`
+	CACert               string                `yaml:"ca_cert"`
+	ClientCert           string                `yaml:"client_cert"`
+	ClientKey            string                `yaml:"client_key"`
+	ClientID             string                `yaml:"client_id"`
 }
 
 const EncodingJSON = "JSON"

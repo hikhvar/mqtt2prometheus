@@ -73,6 +73,7 @@ func main() {
 	}
 	mqttClientOptions := mqtt.NewClientOptions()
 	mqttClientOptions.AddBroker(cfg.MQTT.Server).SetCleanSession(true)
+	mqttClientOptions.SetAutoReconnect(true)
 	mqttClientOptions.SetUsername(cfg.MQTT.User)
 	mqttClientOptions.SetPassword(cfg.MQTT.Password)
 
@@ -96,6 +97,8 @@ func main() {
 		logger.Fatal("could not setup a metric extractor", zap.Error(err))
 	}
 	ingest := metrics.NewIngest(collector, extractor, cfg.MQTT.DeviceIDRegex)
+	mqttClientOptions.SetOnConnectHandler(ingest.OnConnectHandler)
+	mqttClientOptions.SetConnectionLostHandler(ingest.ConnectionLostHandler)
 	errorChan := make(chan error, 1)
 
 	for {
@@ -113,7 +116,7 @@ func main() {
 		time.Sleep(10 * time.Second)
 	}
 
-	prometheus.MustRegister(ingest.MessageMetric())
+	prometheus.MustRegister(ingest.Collector())
 	prometheus.MustRegister(collector)
 	http.Handle("/metrics", promhttp.Handler())
 	go func() {

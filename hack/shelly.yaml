@@ -5,8 +5,8 @@ mqtt:
   metric_per_topic_config:
     metric_name_regex: "shellies/(?P<deviceid>.*)/sensor/(?P<metricname>.*)"
   qos: 0
-  cache:
-    timeout: 24h
+cache:
+  timeout: 24h
 metrics:
   - prom_name: temperature
     # The name of the metric in a MQTT JSON message

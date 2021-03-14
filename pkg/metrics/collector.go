@@ -9,8 +9,6 @@ import (
 	"time"
 )
 
-const DefaultTimeout = 0
-
 type Collector interface {
 	prometheus.Collector
 	Observe(deviceID string, collection MetricCollection)
@@ -32,7 +30,7 @@ type Metric struct {
 
 type CacheItem struct {
 	DeviceID string
-	Metric Metric
+	Metric   Metric
 }
 
 type MetricCollection []Metric
@@ -52,10 +50,10 @@ func NewCollector(defaultTimeout time.Duration, possibleMetrics []config.MetricC
 func (c *MemoryCachedCollector) Observe(deviceID string, collection MetricCollection) {
 	for _, m := range collection {
 		item := CacheItem{
-			DeviceID: deviceID, 
-			Metric: m,
+			DeviceID: deviceID,
+			Metric:   m,
 		}
-		c.cache.Set(fmt.Sprintf("%s-%s", deviceID, m.Description.String()), item, DefaultTimeout)
+		c.cache.Set(fmt.Sprintf("%s-%s", deviceID, m.Description.String()), item, gocache.DefaultExpiration)
 	}
 }
 

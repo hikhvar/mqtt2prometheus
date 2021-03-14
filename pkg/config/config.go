@@ -158,7 +158,7 @@ func LoadConfig(configFile string) (Config, error) {
 		return Config{}, err
 	}
 	var cfg Config
-	if err = yaml.Unmarshal(configData, &cfg); err != nil {
+	if err = yaml.UnmarshalStrict(configData, &cfg); err != nil {
 		return cfg, err
 	}
 	if cfg.MQTT == nil {

@@ -15,11 +15,14 @@ import (
 	"go.uber.org/zap/zapcore"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
+	"github.com/go-kit/kit/log"
+	kitzap "github.com/go-kit/kit/log/zap"
 	"github.com/hikhvar/mqtt2prometheus/pkg/config"
 	"github.com/hikhvar/mqtt2prometheus/pkg/metrics"
 	"github.com/hikhvar/mqtt2prometheus/pkg/mqttclient"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/prometheus/exporter-toolkit/web"
 )
 
 // These variables are set by goreleaser at linking time.
@@ -55,6 +58,11 @@ var (
 		"log-format",
 		"console",
 		"set the desired log output format. Valid values are 'console' and 'json'",
+	)
+	webConfigFlag = flag.String(
+		"web-config-file",
+		"",
+		"[EXPERIMENTAL] Path to configuration file that can enable TLS or authentication for metric scraping.",
 	)
 )
 
@@ -119,8 +127,12 @@ func main() {
 	prometheus.MustRegister(ingest.Collector())
 	prometheus.MustRegister(collector)
 	http.Handle("/metrics", promhttp.Handler())
+	s := &http.Server{
+		Addr:    getListenAddress(),
+		Handler: http.DefaultServeMux,
+	}
 	go func() {
-		err = http.ListenAndServe(getListenAddress(), nil)
+		err = web.ListenAndServe(s, *webConfigFlag, setupGoKitLogger(logger))
 		if err != nil {
 			logger.Fatal("Error while serving http", zap.Error(err))
 		}
@@ -181,6 +193,10 @@ func mustSetupLogger() *zap.Logger {
 
 	config.SetProcessContext(logger)
 	return logger
+}
+
+func setupGoKitLogger(l *zap.Logger) log.Logger {
+	return kitzap.NewZapSugarLogger(l, zap.NewAtomicLevelAt(*logLevelFlag).Level())
 }
 
 func setupExtractor(cfg config.Config) (metrics.Extractor, error) {

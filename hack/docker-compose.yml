@@ -8,6 +8,8 @@ services:
       - /mqtt2prometheus
       - -log-level
       - debug
+      - -config
+      - /config.yaml
     ports:
       - 9641:9641
     volumes:

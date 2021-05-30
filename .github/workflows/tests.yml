@@ -28,7 +28,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
       - name: Run golangci-lint
-        uses: actions-contrib/golangci-lint@v1
+        uses: golangci/golangci-lint-action@v2
+        with:
+          only-new-issues: true
 
   goreleaser:
     needs:

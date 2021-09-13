@@ -79,6 +79,17 @@ func main() {
 	if err != nil {
 		logger.Fatal("Could not load config", zap.Error(err))
 	}
+
+	mqtt_user := os.Getenv("MQTT2PROM_MQTT_USER")
+	mqtt_password := os.Getenv("MQTT2PROM_MQTT_PASSWORD")
+
+	if mqtt_user != "" {
+		cfg.MQTT.User = mqtt_user
+	}
+	if mqtt_password != "" {
+		cfg.MQTT.Password = mqtt_password
+	}
+
 	mqttClientOptions := mqtt.NewClientOptions()
 	mqttClientOptions.AddBroker(cfg.MQTT.Server).SetCleanSession(true)
 	mqttClientOptions.SetAutoReconnect(true)

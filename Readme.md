@@ -179,6 +179,30 @@ metrics:
       error_value: 1      
 ```
 
+### Environment Variables
+
+Having the MQTT login details in the config file runs the risk of publishing them to a version control system. To avoid this, you can supply these parameters via environment variables. MQTT2Prometheus will look for `MQTT2PROM_MQTT_USER` and `MQTT2PROM_MQTT_PASSWORD` in the local environment and load them on startup.
+
+#### Example use with Docker
+
+Create a file to store your login details, for example at `~/secrets/mqtt2prom`:
+```SHELL
+#!/bin/bash
+export MQTT2PROM_MQTT_USER="myUser" 
+export MQTT2PROM_MQTT_PASSWORD="superpassword"
+```
+
+Then load that file into the environment before starting the container:
+```SHELL
+ source ~/secrets/mqtt2prom && \
+  docker run -it \
+  -e MQTT2PROM_MQTT_USER \
+  -e MQTT2PROM_MQTT_PASSWORD \
+  -v "$(pwd)/examples/config.yaml:/config.yaml" \
+  -p 9641:9641 \
+  ghcr.io/hikhvar/mqtt2prometheus:latest
+```
+
 
 ## Best Practices
 The exporter can only listen to one topic_path per instance. If you have to listen to two different topic_paths it is 

@@ -28,7 +28,7 @@ func Fuzz(data []byte) int {
 			PrometheusName: "kartoffeln",
 			ValueType:      "counter",
 		},
-	})
+	}, ".")
 	json := metrics.NewJSONObjectExtractor(p)
 	mc, err := json("foo", data, "bar")
 	if err != nil && len(mc) > 0 {

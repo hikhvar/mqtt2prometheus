@@ -25,6 +25,11 @@ cache:
   # Set the timeout to -1 to disable the deletion of metrics from the cache. The exporter presents the ingest timestamp
   # to prometheus.
   timeout: 24h
+json_parsing:
+  # Separator. Used to split path to elements when accessing json fields.
+  # You can access json fields with dots in it. F.E. {"key.name": {"nested": "value"}}
+  # Just set separator to -> and use key.name->nested as mqtt_name
+  separator: .
 # This is a list of valid metrics. Only metrics listed here will be exported
 metrics:
     # The name of the metric in prometheus

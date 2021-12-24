@@ -29,6 +29,10 @@ var CacheConfigDefaults = CacheConfig{
 	Timeout: 2 * time.Minute,
 }
 
+var JsonParsingConfigDefaults = JsonParsingConfig{
+	Separator: ".",
+}
+
 type Regexp struct {
 	r       *regexp.Regexp
 	pattern string
@@ -83,13 +87,18 @@ func MustNewRegexp(pattern string) *Regexp {
 }
 
 type Config struct {
-	Metrics []MetricConfig `yaml:"metrics"`
-	MQTT    *MQTTConfig    `yaml:"mqtt,omitempty"`
-	Cache   *CacheConfig   `yaml:"cache,omitempty"`
+	JsonParsing *JsonParsingConfig `yaml:json_parsing,omitempty`
+	Metrics     []MetricConfig     `yaml:"metrics"`
+	MQTT        *MQTTConfig        `yaml:"mqtt,omitempty"`
+	Cache       *CacheConfig       `yaml:"cache,omitempty"`
 }
 
 type CacheConfig struct {
 	Timeout time.Duration `yaml:"timeout"`
+}
+
+type JsonParsingConfig struct {
+	Separator string `yaml:"separator"`
 }
 
 type MQTTConfig struct {
@@ -166,6 +175,9 @@ func LoadConfig(configFile string) (Config, error) {
 	}
 	if cfg.Cache == nil {
 		cfg.Cache = &CacheConfigDefaults
+	}
+	if cfg.JsonParsing == nil {
+		cfg.JsonParsing = &JsonParsingConfigDefaults
 	}
 	if cfg.MQTT.DeviceIDRegex == nil {
 		cfg.MQTT.DeviceIDRegex = MQTTConfigDefaults.DeviceIDRegex

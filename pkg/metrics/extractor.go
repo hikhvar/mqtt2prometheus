@@ -3,6 +3,7 @@ package metrics
 import (
 	"errors"
 	"fmt"
+
 	"github.com/hikhvar/mqtt2prometheus/pkg/config"
 	gojsonq "github.com/thedevsaddam/gojsonq/v2"
 )
@@ -12,7 +13,7 @@ type Extractor func(topic string, payload []byte, deviceID string) (MetricCollec
 func NewJSONObjectExtractor(p Parser) Extractor {
 	return func(topic string, payload []byte, deviceID string) (MetricCollection, error) {
 		var mc MetricCollection
-		parsed := gojsonq.New().FromString(string(payload))
+		parsed := gojsonq.New(gojsonq.SetSeparator(p.separator)).FromString(string(payload))
 
 		for path := range p.config() {
 			rawValue := parsed.Find(path)

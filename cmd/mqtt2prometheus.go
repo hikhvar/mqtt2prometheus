@@ -211,7 +211,7 @@ func setupGoKitLogger(l *zap.Logger) log.Logger {
 }
 
 func setupExtractor(cfg config.Config) (metrics.Extractor, error) {
-	parser := metrics.NewParser(cfg.Metrics)
+	parser := metrics.NewParser(cfg.Metrics, cfg.JsonParsing.Separator)
 	if cfg.MQTT.ObjectPerTopicConfig != nil {
 		switch cfg.MQTT.ObjectPerTopicConfig.Encoding {
 		case config.EncodingJSON:

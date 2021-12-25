@@ -3,9 +3,10 @@ package metrics
 import (
 	"errors"
 	"fmt"
-	"github.com/hikhvar/mqtt2prometheus/pkg/config"
 	"strconv"
 	"time"
+
+	"github.com/hikhvar/mqtt2prometheus/pkg/config"
 )
 
 type metricNotConfiguredError error
@@ -13,18 +14,20 @@ type metricNotConfiguredError error
 var metricNotConfigured metricNotConfiguredError = errors.New("metric not configured failed to parse")
 
 type Parser struct {
+	separator     string
 	metricConfigs map[string][]config.MetricConfig
 }
 
 var now = time.Now
 
-func NewParser(metrics []config.MetricConfig) Parser {
+func NewParser(metrics []config.MetricConfig, separator string) Parser {
 	cfgs := make(map[string][]config.MetricConfig)
 	for i := range metrics {
 		key := metrics[i].MQTTName
 		cfgs[key] = append(cfgs[key], metrics[i])
 	}
 	return Parser{
+		separator:     separator,
 		metricConfigs: cfgs,
 	}
 }

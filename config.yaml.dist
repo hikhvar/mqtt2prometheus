@@ -1,4 +1,3 @@
-# Settings for the MQTT Client. Currently only these three are supported
 mqtt:
   # The MQTT broker to connect to
   server: tcp://127.0.0.1:1883

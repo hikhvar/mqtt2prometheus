@@ -29,9 +29,6 @@ builds:
     - arm
     - arm64
     - 386
-    - riscv64
-    - ppc64le
-    - s390x
 
   # GOARM to build for when GOARCH is arm.
   # For more info refer to: https://golang.org/doc/install/source#environment
@@ -155,30 +152,6 @@ dockers:
       - "ghcr.io/hikhvar/mqtt2prometheus:{{ .Tag }}-386"
       - "ghcr.io/hikhvar/mqtt2prometheus:latest-386"
 
-  - dockerfile: release/Dockerfile.scratch
-    goos: linux
-    goarch: ppc64le
-    use_buildx: true
-    build_flag_templates:
-      - "--platform=linux/ppc64le"
-    image_templates:
-      - "hikhvar/mqtt2prometheus:{{ .Tag }}-ppc64le"
-      - "hikhvar/mqtt2prometheus:latest-ppc64le"
-      - "ghcr.io/hikhvar/mqtt2prometheus:{{ .Tag }}-ppc64le"
-      - "ghcr.io/hikhvar/mqtt2prometheus:latest-ppc64le"
-
-  - dockerfile: release/Dockerfile.scratch
-    goos: linux
-    goarch: s390x
-    use_buildx: true
-    build_flag_templates:
-      - "--platform=linux/s390x"
-    image_templates:
-      - "hikhvar/mqtt2prometheus:{{ .Tag }}-s390x"
-      - "hikhvar/mqtt2prometheus:latest-s390x"
-      - "ghcr.io/hikhvar/mqtt2prometheus:{{ .Tag }}-s390x"
-      - "ghcr.io/hikhvar/mqtt2prometheus:latest-s390x"
-
 docker_manifests:
   # Docker Registry
   - name_template: hikhvar/mqtt2prometheus:{{ .Tag }}
@@ -187,9 +160,7 @@ docker_manifests:
       - "hikhvar/mqtt2prometheus:{{ .Tag }}-arm64"
       - "hikhvar/mqtt2prometheus:{{ .Tag }}-arm6"
       - "hikhvar/mqtt2prometheus:{{ .Tag }}-arm7"
-      - "hikhvar/mqtt2prometheus:{{ .Tag }}-ppc64le"
       - "hikhvar/mqtt2prometheus:{{ .Tag }}-386"
-      - "hikhvar/mqtt2prometheus:{{ .Tag }}-s390x"
 
   - name_template: hikhvar/mqtt2prometheus:latest
     image_templates:
@@ -197,9 +168,7 @@ docker_manifests:
       - "hikhvar/mqtt2prometheus:latest-arm64"
       - "hikhvar/mqtt2prometheus:latest-arm6"
       - "hikhvar/mqtt2prometheus:latest-arm7"
-      - "hikhvar/mqtt2prometheus:latest-ppc64le"
       - "hikhvar/mqtt2prometheus:latest-386"
-      - "hikhvar/mqtt2prometheus:latest-s390x"
 
   # Github Registry
   - name_template: ghcr.io/hikhvar/mqtt2prometheus:{{ .Tag }}
@@ -208,9 +177,7 @@ docker_manifests:
       - "ghcr.io/hikhvar/mqtt2prometheus:{{ .Tag }}-arm64"
       - "ghcr.io/hikhvar/mqtt2prometheus:{{ .Tag }}-arm6"
       - "ghcr.io/hikhvar/mqtt2prometheus:{{ .Tag }}-arm7"
-      - "ghcr.io/hikhvar/mqtt2prometheus:{{ .Tag }}-ppc64le"
       - "ghcr.io/hikhvar/mqtt2prometheus:{{ .Tag }}-386"
-      - "ghcr.io/hikhvar/mqtt2prometheus:{{ .Tag }}-s390x"
 
   - name_template: ghcr.io/hikhvar/mqtt2prometheus:latest
     image_templates:
@@ -218,6 +185,4 @@ docker_manifests:
       - "ghcr.io/hikhvar/mqtt2prometheus:latest-arm64"
       - "ghcr.io/hikhvar/mqtt2prometheus:latest-arm6"
       - "ghcr.io/hikhvar/mqtt2prometheus:latest-arm7"
-      - "ghcr.io/hikhvar/mqtt2prometheus:latest-ppc64le"
       - "ghcr.io/hikhvar/mqtt2prometheus:latest-386"
-      - "ghcr.io/hikhvar/mqtt2prometheus:latest-s390x"

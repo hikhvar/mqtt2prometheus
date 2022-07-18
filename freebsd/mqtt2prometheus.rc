@@ -1,0 +1,17 @@
+#!/bin/sh
+#
+# PROVIDE: mqtt2prometheus
+# REQUIRE: NETWORKING DAEMON
+
+. /etc/rc.subr
+
+name=mqtt2prometheus
+rcvar=mqtt2prometheus_enable
+mqtt2prometheus_config="/usr/local/etc/mqtt2prometheus/config.yaml"
+
+command="/usr/local/bin/mqtt2prometheus"
+
+start_cmd="/usr/sbin/daemon -T mqtt2prometheus -u nobody -c $command -config=${mqtt2prometheus_config}"
+
+load_rc_config $name
+run_rc_command "$1"

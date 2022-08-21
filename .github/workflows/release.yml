@@ -14,9 +14,9 @@ jobs:
       - name: Unshallow
         run: git fetch --prune --unshallow
       - name: Set up Go
-        uses: actions/setup-go@v1
+        uses: actions/setup-go@v3
         with:
-          go-version: 1.15.x
+          go-version: 1.19.x
       - name: Test
         run: go test -cover ./...
       - name: Vet
@@ -38,7 +38,7 @@ jobs:
           echo '{"experimental": true}' | sudo tee -a  /etc/docker/daemon.json
           sudo systemctl restart docker
       - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v1
+        uses: goreleaser/goreleaser-action@v3
         with:
           version: latest
           args: release --rm-dist

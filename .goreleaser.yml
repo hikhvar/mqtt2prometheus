@@ -92,7 +92,7 @@ dockers:
   - dockerfile: release/Dockerfile.scratch
     goos: linux
     goarch: amd64
-    use_buildx: true
+    use: buildx
     build_flag_templates:
       - "--platform=linux/amd64"
     image_templates:
@@ -104,7 +104,7 @@ dockers:
   - dockerfile: release/Dockerfile.scratch
     goos: linux
     goarch: arm64
-    use_buildx: true
+    use: buildx
     build_flag_templates:
       - "--platform=linux/arm64"
     image_templates:
@@ -118,7 +118,7 @@ dockers:
     goos: linux
     goarch: arm
     goarm: 6
-    use_buildx: true
+    use: buildx
     build_flag_templates:
       - "--platform=linux/arm/v6"
     image_templates:
@@ -131,7 +131,7 @@ dockers:
     goos: linux
     goarch: arm
     goarm: 7
-    use_buildx: true
+    use: buildx
     build_flag_templates:
       - "--platform=linux/arm/v7"
     image_templates:
@@ -143,7 +143,7 @@ dockers:
   - dockerfile: release/Dockerfile.scratch
     goos: linux
     goarch: 386
-    use_buildx: true
+    use: buildx
     build_flag_templates:
       - "--platform=linux/386"
     image_templates:

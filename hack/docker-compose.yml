@@ -17,7 +17,7 @@ services:
         source: ./${CONFIG:-dht22.yaml}
         target: /config.yaml
   mosquitto:
-    image: eclipse-mosquitto:1.6.9
+    image: eclipse-mosquitto:1.6.15
     ports:
     - 1883:1883
     - 9001:9001

@@ -1,0 +1,25 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:base",
+    ":automergeRequireAllStatusChecks",
+    ":separateMultipleMajorReleases",
+    ":separatePatchReleases",
+    ":renovatePrefix",
+    ":semanticPrefixChore",
+    ":prHourlyLimitNone",
+    ":prConcurrentLimit10"
+  ],
+  "automergeType": "pr",
+  "postUpdateOptions": [
+    "gomodTidy"
+  ],
+  "labels": [
+    "dependencies",
+    "versions",
+    "automated"
+  ],
+  "rebaseWhen": "behind-base-branch",
+  "stabilityDays": 10,
+  "internalChecksFilter": "strict"
+}

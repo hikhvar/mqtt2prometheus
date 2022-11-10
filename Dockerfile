@@ -1,5 +1,6 @@
 FROM golang:1.19 as builder
 
+
 COPY . /build/mqtt2prometheus
 WORKDIR /build/mqtt2prometheus
 RUN make static_build TARGET_FILE=/bin/mqtt2prometheus

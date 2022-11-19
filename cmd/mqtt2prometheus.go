@@ -131,7 +131,7 @@ func main() {
 			// connected, break loop
 			break
 		}
-		logger.Warn("could not connect to mqtt broker %s, sleep 10 second", zap.Error(err))
+		logger.Warn("could not connect to mqtt broker, sleep 10 second", zap.Error(err))
 		time.Sleep(10 * time.Second)
 	}
 

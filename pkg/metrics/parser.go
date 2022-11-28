@@ -94,6 +94,11 @@ func (p *Parser) parseMetric(metricPath string, deviceID string, value interface
 	} else {
 		return Metric{}, fmt.Errorf("got data with unexpectd type: %T ('%s')", value, value)
 	}
+
+	if cfg.MQTTValueScale != 0 {
+		metricValue = metricValue / float64(cfg.MQTTValueScale)
+	}
+
 	return Metric{
 		Description: cfg.PrometheusDescription(),
 		Value:       metricValue,

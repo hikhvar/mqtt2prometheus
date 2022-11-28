@@ -1,11 +1,12 @@
 package metrics
 
 import (
-	"github.com/hikhvar/mqtt2prometheus/pkg/config"
-	"github.com/prometheus/client_golang/prometheus"
 	"reflect"
 	"testing"
 	"time"
+
+	"github.com/hikhvar/mqtt2prometheus/pkg/config"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 func TestParser_parseMetric(t *testing.T) {
@@ -90,6 +91,32 @@ func TestParser_parseMetric(t *testing.T) {
 				Description: prometheus.NewDesc("temperature", "", []string{"sensor", "topic"}, nil),
 				ValueType:   prometheus.GaugeValue,
 				Value:       12.6,
+				IngestTime:  testNow(),
+				Topic:       "",
+			},
+		},
+		{
+			name: "scaled float value",
+			fields: fields{
+				map[string][]config.MetricConfig{
+					"humidity": []config.MetricConfig{
+						{
+							PrometheusName: "humidity",
+							ValueType:      "gauge",
+							MQTTValueScale: 100,
+						},
+					},
+				},
+			},
+			args: args{
+				metricPath: "humidity",
+				deviceID:   "dht22",
+				value:      12.6,
+			},
+			want: Metric{
+				Description: prometheus.NewDesc("humidity", "", []string{"sensor", "topic"}, nil),
+				ValueType:   prometheus.GaugeValue,
+				Value:       0.126,
 				IngestTime:  testNow(),
 				Topic:       "",
 			},

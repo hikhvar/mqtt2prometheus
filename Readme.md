@@ -186,6 +186,8 @@ metrics:
  - prom_name: humidity
   # The name of the metric in a MQTT JSON message
    mqtt_name: humidity
+  # The scale of the metric in a MQTT JSON message (mqtt_value : scale = prom_value : 1)
+   mqtt_value_scale: 100
   # The prometheus help text for this metric
    help: DHT22 humidity reading
   # The prometheus type for this metric. Valid values are: "gauge" and "counter"

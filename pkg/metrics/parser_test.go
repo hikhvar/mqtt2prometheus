@@ -1,11 +1,12 @@
 package metrics
 
 import (
-	"github.com/hikhvar/mqtt2prometheus/pkg/config"
-	"github.com/prometheus/client_golang/prometheus"
 	"reflect"
 	"testing"
 	"time"
+
+	"github.com/hikhvar/mqtt2prometheus/pkg/config"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 func TestParser_parseMetric(t *testing.T) {
@@ -46,6 +47,32 @@ func TestParser_parseMetric(t *testing.T) {
 				Description: prometheus.NewDesc("temperature", "", []string{"sensor", "topic"}, nil),
 				ValueType:   prometheus.GaugeValue,
 				Value:       12.6,
+				IngestTime:  testNow(),
+				Topic:       "",
+			},
+		},
+		{
+			name: "scaled string value",
+			fields: fields{
+				map[string][]config.MetricConfig{
+					"temperature": []config.MetricConfig{
+						{
+							PrometheusName: "temperature",
+							ValueType:      "gauge",
+							MQTTValueScale: 0.01,
+						},
+					},
+				},
+			},
+			args: args{
+				metricPath: "temperature",
+				deviceID:   "dht22",
+				value:      "12.6",
+			},
+			want: Metric{
+				Description: prometheus.NewDesc("temperature", "", []string{"sensor", "topic"}, nil),
+				ValueType:   prometheus.GaugeValue,
+				Value:       0.126,
 				IngestTime:  testNow(),
 				Topic:       "",
 			},
@@ -95,6 +122,58 @@ func TestParser_parseMetric(t *testing.T) {
 			},
 		},
 		{
+			name: "scaled float value",
+			fields: fields{
+				map[string][]config.MetricConfig{
+					"humidity": []config.MetricConfig{
+						{
+							PrometheusName: "humidity",
+							ValueType:      "gauge",
+							MQTTValueScale: 0.01,
+						},
+					},
+				},
+			},
+			args: args{
+				metricPath: "humidity",
+				deviceID:   "dht22",
+				value:      12.6,
+			},
+			want: Metric{
+				Description: prometheus.NewDesc("humidity", "", []string{"sensor", "topic"}, nil),
+				ValueType:   prometheus.GaugeValue,
+				Value:       0.126,
+				IngestTime:  testNow(),
+				Topic:       "",
+			},
+		},
+		{
+			name: "negative scaled float value",
+			fields: fields{
+				map[string][]config.MetricConfig{
+					"humidity": []config.MetricConfig{
+						{
+							PrometheusName: "humidity",
+							ValueType:      "gauge",
+							MQTTValueScale: -2,
+						},
+					},
+				},
+			},
+			args: args{
+				metricPath: "humidity",
+				deviceID:   "dht22",
+				value:      12.6,
+			},
+			want: Metric{
+				Description: prometheus.NewDesc("humidity", "", []string{"sensor", "topic"}, nil),
+				ValueType:   prometheus.GaugeValue,
+				Value:       -25.2,
+				IngestTime:  testNow(),
+				Topic:       "",
+			},
+		},
+		{
 			name: "bool value true",
 			fields: fields{
 				map[string][]config.MetricConfig{
@@ -115,6 +194,32 @@ func TestParser_parseMetric(t *testing.T) {
 				Description: prometheus.NewDesc("enabled", "", []string{"sensor", "topic"}, nil),
 				ValueType:   prometheus.GaugeValue,
 				Value:       1,
+				IngestTime:  testNow(),
+				Topic:       "",
+			},
+		},
+		{
+			name: "scaled bool value",
+			fields: fields{
+				map[string][]config.MetricConfig{
+					"enabled": []config.MetricConfig{
+						{
+							PrometheusName: "enabled",
+							ValueType:      "gauge",
+							MQTTValueScale: 0.5,
+						},
+					},
+				},
+			},
+			args: args{
+				metricPath: "enabled",
+				deviceID:   "dht22",
+				value:      true,
+			},
+			want: Metric{
+				Description: prometheus.NewDesc("enabled", "", []string{"sensor", "topic"}, nil),
+				ValueType:   prometheus.GaugeValue,
+				Value:       0.5,
 				IngestTime:  testNow(),
 				Topic:       "",
 			},

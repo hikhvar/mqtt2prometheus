@@ -135,6 +135,7 @@ type MetricConfig struct {
 	ValueType          string                    `yaml:"type"`
 	ConstantLabels     map[string]string         `yaml:"const_labels"`
 	StringValueMapping *StringValueMappingConfig `yaml:"string_value_mapping"`
+	MQTTValueScale     float64                   `yaml:"mqtt_value_scale"`
 }
 
 // StringValueMappingConfig defines the mapping from string to float

@@ -99,10 +99,15 @@ func (p *Parser) parseMetric(metricPath string, deviceID string, value interface
 		metricValue = metricValue * cfg.MQTTValueScale
 	}
 
+	var ingestTime time.Time
+	if !cfg.OmitTimestamp {
+		ingestTime = now()
+	}
+
 	return Metric{
 		Description: cfg.PrometheusDescription(),
 		Value:       metricValue,
 		ValueType:   cfg.PrometheusValueType(),
-		IngestTime:  now(),
+		IngestTime:  ingestTime,
 	}, nil
 }

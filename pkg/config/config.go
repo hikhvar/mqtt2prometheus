@@ -133,6 +133,7 @@ type MetricConfig struct {
 	SensorNameFilter   Regexp                    `yaml:"sensor_name_filter"`
 	Help               string                    `yaml:"help"`
 	ValueType          string                    `yaml:"type"`
+	OmitTimestamp      bool                      `yaml:"omit_timestamp"`
 	ConstantLabels     map[string]string         `yaml:"const_labels"`
 	StringValueMapping *StringValueMappingConfig `yaml:"string_value_mapping"`
 	MQTTValueScale     float64                   `yaml:"mqtt_value_scale"`

@@ -59,7 +59,7 @@ func TestParser_parseMetric(t *testing.T) {
 						{
 							PrometheusName: "temperature",
 							ValueType:      "gauge",
-							MQTTValueScale: 100,
+							MQTTValueScale: 0.01,
 						},
 					},
 				},
@@ -129,7 +129,7 @@ func TestParser_parseMetric(t *testing.T) {
 						{
 							PrometheusName: "humidity",
 							ValueType:      "gauge",
-							MQTTValueScale: 100,
+							MQTTValueScale: 0.01,
 						},
 					},
 				},
@@ -155,7 +155,7 @@ func TestParser_parseMetric(t *testing.T) {
 						{
 							PrometheusName: "humidity",
 							ValueType:      "gauge",
-							MQTTValueScale: -0.5,
+							MQTTValueScale: -2,
 						},
 					},
 				},
@@ -206,7 +206,7 @@ func TestParser_parseMetric(t *testing.T) {
 						{
 							PrometheusName: "enabled",
 							ValueType:      "gauge",
-							MQTTValueScale: 2,
+							MQTTValueScale: 0.5,
 						},
 					},
 				},

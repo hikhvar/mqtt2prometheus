@@ -96,7 +96,7 @@ func (p *Parser) parseMetric(metricPath string, deviceID string, value interface
 	}
 
 	if cfg.MQTTValueScale != 0 {
-		metricValue = metricValue / float64(cfg.MQTTValueScale)
+		metricValue = metricValue / cfg.MQTTValueScale
 	}
 
 	return Metric{

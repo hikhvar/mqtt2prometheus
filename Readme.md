@@ -216,6 +216,8 @@ metrics:
    help: Light state
   # The prometheus type for this metric. Valid values are: "gauge" and "counter"
    type: gauge
+  # according to prometheus exposition format timestamp is not mandatory, we can omit it if the reporting from the sensor is sporadic
+   omit_timestamp: true
   # A map of string to string for constant labels. This labels will be attached to every prometheus metric
    const_labels:
     sensor_type: ikea

@@ -27,6 +27,32 @@ func TestParser_parseMetric(t *testing.T) {
 		wantErr bool
 	}{
 		{
+			name: "value without timestamp",
+			fields: fields{
+				map[string][]config.MetricConfig{
+					"temperature": []config.MetricConfig{
+						{
+							PrometheusName: "temperature",
+							ValueType:      "gauge",
+							OmitTimestamp:  true,
+						},
+					},
+				},
+			},
+			args: args{
+				metricPath: "temperature",
+				deviceID:   "dht22",
+				value:      12.6,
+			},
+			want: Metric{
+				Description: prometheus.NewDesc("temperature", "", []string{"sensor", "topic"}, nil),
+				ValueType:   prometheus.GaugeValue,
+				Value:       12.6,
+				IngestTime:  time.Time{},
+				Topic:       "",
+			},
+		},
+		{
 			name: "string value",
 			fields: fields{
 				map[string][]config.MetricConfig{

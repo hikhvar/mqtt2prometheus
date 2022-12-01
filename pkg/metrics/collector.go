@@ -2,11 +2,12 @@ package metrics
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/hikhvar/mqtt2prometheus/pkg/config"
 	gocache "github.com/patrickmn/go-cache"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"
-	"time"
 )
 
 type Collector interface {
@@ -77,7 +78,12 @@ func (c *MemoryCachedCollector) Collect(mc chan<- prometheus.Metric) {
 			device,
 			metric.Topic,
 		)
-		mc <- prometheus.NewMetricWithTimestamp(metric.IngestTime, m)
+
+		if metric.IngestTime.IsZero() {
+			mc <- m
+		} else {
+			mc <- prometheus.NewMetricWithTimestamp(metric.IngestTime, m)
+		}
 
 	}
 }

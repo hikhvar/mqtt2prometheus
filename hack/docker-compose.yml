@@ -22,7 +22,7 @@ services:
     - 1883:1883
     - 9001:9001
   prometheus:
-    image: prom/prometheus:v2.40.4
+    image: prom/prometheus:v2.40.5
     ports:
     - 9090:9090
     volumes:

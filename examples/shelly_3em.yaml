@@ -1,0 +1,56 @@
+# Sample mqtt messages processed by this configuration file,
+# $ mosquitto_sub -t "shellies/shellyem3-123456789/emeter/+/+" -v
+# 
+# shellies/shellyem3-123456789/emeter/0/power 41.25
+# shellies/shellyem3-123456789/emeter/0/pf 0.18
+# shellies/shellyem3-123456789/emeter/0/current 0.99
+# shellies/shellyem3-123456789/emeter/0/voltage 232.25
+# shellies/shellyem3-123456789/emeter/0/total 13372.4
+# shellies/shellyem3-123456789/emeter/0/total_returned 0.0
+# shellies/shellyem3-123456789/emeter/1/power 275.04
+# shellies/shellyem3-123456789/emeter/1/pf 0.72
+# shellies/shellyem3-123456789/emeter/1/current 1.65
+# shellies/shellyem3-123456789/emeter/1/voltage 232.83
+# shellies/shellyem3-123456789/emeter/1/total 27948.4
+# shellies/shellyem3-123456789/emeter/1/total_returned 0.0
+# shellies/shellyem3-123456789/emeter/2/power -2.23
+# shellies/shellyem3-123456789/emeter/2/pf -0.02
+# shellies/shellyem3-123456789/emeter/2/current 0.39
+# shellies/shellyem3-123456789/emeter/2/voltage 233.14
+# shellies/shellyem3-123456789/emeter/2/total 4107.8
+# shellies/shellyem3-123456789/emeter/2/total_returned 186.9
+
+# Settings for the MQTT Client. Currently only these three are supported
+mqtt:
+  # The MQTT broker to connect to
+  server: tcp://127.0.0.1:1883
+  # Optional: Username and Password for authenticating with the MQTT Server
+  # user: bob
+  # password: happylittleclouds
+  
+  # The Topic path to subscribe to. Be aware that you have to specify the wildcard.
+  topic_path: shellies/shellyem3-123456789/emeter/+/+
+
+  # Use the phase number as device_id in order to see all three phases in /metrics
+  device_id_regex: "shellies/(.*)/emeter/(?P<deviceid>.*)/.*"
+
+  # Metrics are being published on a per-topic basis.
+  metric_per_topic_config:
+    metric_name_regex: "shellies/(?P<deviceid>.*)/emeter/(.*)/(?P<metricname>.*)"
+  # The MQTT QoS level
+  qos: 0
+cache:
+  timeout: 60m
+
+metrics:
+  - prom_name: power
+    mqtt_name: power
+    type: gauge
+    const_labels:
+      sensor_type: shelly
+
+  - prom_name: voltage
+    mqtt_name: voltage
+    type: gauge
+    const_labels:
+      sensor_type: shelly

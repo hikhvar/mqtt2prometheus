@@ -193,6 +193,11 @@ func LoadConfig(configFile string) (Config, error) {
 	if !validRegex {
 		return Config{}, fmt.Errorf("device id regex %q does not contain required regex group %q", cfg.MQTT.DeviceIDRegex.pattern, DeviceIDRegexGroup)
 	}
+
+	if cfg.MQTT.ObjectPerTopicConfig != nil && cfg.MQTT.MetricPerTopicConfig != nil {
+		return Config{}, fmt.Errorf("only one of object_per_topic_config and metric_per_topic_config can be specified")
+	}
+
 	if cfg.MQTT.ObjectPerTopicConfig == nil && cfg.MQTT.MetricPerTopicConfig == nil {
 		cfg.MQTT.ObjectPerTopicConfig = &ObjectPerTopicConfig{
 			Encoding: EncodingJSON,

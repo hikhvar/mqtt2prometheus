@@ -159,6 +159,16 @@ mqtt:
  device_id_regex: "(.*/)?(?P<deviceid>.*)"
  # The MQTT QoS level
  qos: 0
+ # NOTE: Only one of metric_per_topic_config or object_per_topic_config should be specified in the configuration
+ # Optional: Configures mqtt2prometheus to expect a single metric to be published as the value on an mqtt topic.
+ metric_per_topic_config:
+  # A regex used for extracting the metric name from the topic. Must contain a named group for `metricname`.
+  metric_name_regex: "(.*/)?(?P<metricname>.*)"
+ # Optional: Configures mqtt2prometheus to expect an object containing multiple metrics to be published as the value on an mqtt topic.
+ # This is the default. 
+ object_per_topic_config:
+  # The encoding of the object, currently only json is supported
+  encoding: json
 cache:
  # Timeout. Each received metric will be presented for this time if no update is send via MQTT.
  # Set the timeout to -1 to disable the deletion of metrics from the cache. The exporter presents the ingest timestamp

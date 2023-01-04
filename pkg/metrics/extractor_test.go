@@ -25,6 +25,7 @@ func TestNewJSONObjectExtractor_parseMetric(t *testing.T) {
 		args      args
 		want      Metric
 		wantErr   bool
+		noValue   bool
 	}{
 		{
 			name:      "string value",
@@ -78,6 +79,55 @@ func TestNewJSONObjectExtractor_parseMetric(t *testing.T) {
 				IngestTime:  testNow(),
 				Topic:       "topic",
 			},
+		}, {
+			name:      "metric matching SensorNameFilter",
+			separator: ".",
+			fields: fields{
+				map[string][]config.MetricConfig{
+					"temperature": []config.MetricConfig{
+						{
+							PrometheusName:   "temperature",
+							MQTTName:         "temperature",
+							ValueType:        "gauge",
+							SensorNameFilter: *config.MustNewRegexp(".*22$"),
+						},
+					},
+				},
+			},
+			args: args{
+				metricPath: "topic",
+				deviceID:   "dht22",
+				value:      "{\"temperature\": 8.5}",
+			},
+			want: Metric{
+				Description: prometheus.NewDesc("temperature", "", []string{"sensor", "topic"}, nil),
+				ValueType:   prometheus.GaugeValue,
+				Value:       8.5,
+				IngestTime:  testNow(),
+				Topic:       "topic",
+			},
+		}, {
+			name:      "metric not matching SensorNameFilter",
+			separator: ".",
+			fields: fields{
+				map[string][]config.MetricConfig{
+					"temperature": []config.MetricConfig{
+						{
+							PrometheusName:   "temperature",
+							MQTTName:         "temperature",
+							ValueType:        "gauge",
+							SensorNameFilter: *config.MustNewRegexp(".*fail$"),
+						},
+					},
+				},
+			},
+			args: args{
+				metricPath: "topic",
+				deviceID:   "dht22",
+				value:      "{\"temperature\": 8.5}",
+			},
+			want:    Metric{},
+			noValue: true,
 		},
 	}
 	for _, tt := range tests {
@@ -93,10 +143,15 @@ func TestNewJSONObjectExtractor_parseMetric(t *testing.T) {
 				t.Errorf("parseMetric() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if len(got) != 1 {
-				t.Errorf("parseMetric() got = %v, want %v", nil, tt.want)
+
+			if len(got) == 0 {
+				if !tt.noValue {
+					t.Errorf("parseMetric() got = %v, want %v", nil, tt.want)
+				}
 			} else if !reflect.DeepEqual(got[0], tt.want) {
 				t.Errorf("parseMetric() got = %v, want %v", got[0], tt.want)
+			} else if len(got) > 1 {
+				t.Errorf("unexpected result got = %v, want %v", got, tt.want)
 			}
 		})
 	}

@@ -1,7 +1,6 @@
 package metrics
 
 import (
-	"errors"
 	"fmt"
 	"strconv"
 	"time"
@@ -9,12 +8,10 @@ import (
 	"github.com/hikhvar/mqtt2prometheus/pkg/config"
 )
 
-type metricNotConfiguredError error
-
-var metricNotConfigured metricNotConfiguredError = errors.New("metric not configured failed to parse")
-
 type Parser struct {
-	separator     string
+	separator string
+	// Maps the mqtt metric name to a list of configs
+	// The first that matches SensorNameFilter will be used
 	metricConfigs map[string][]config.MetricConfig
 }
 
@@ -39,7 +36,7 @@ func (p *Parser) config() map[string][]config.MetricConfig {
 
 // validMetric returns config matching the metric and deviceID
 // Second return value indicates if config was found.
-func (p *Parser) validMetric(metric string, deviceID string) (config.MetricConfig, bool) {
+func (p *Parser) findMetricConfig(metric string, deviceID string) (config.MetricConfig, bool) {
 	for _, c := range p.metricConfigs[metric] {
 		if c.SensorNameFilter.Match(deviceID) {
 			return c, true
@@ -50,12 +47,7 @@ func (p *Parser) validMetric(metric string, deviceID string) (config.MetricConfi
 
 // parseMetric parses the given value according to the given deviceID and metricPath. The config allows to
 // parse a metric value according to the device ID.
-func (p *Parser) parseMetric(metricPath string, deviceID string, value interface{}) (Metric, error) {
-	cfg, cfgFound := p.validMetric(metricPath, deviceID)
-	if !cfgFound {
-		return Metric{}, metricNotConfigured
-	}
-
+func (p *Parser) parseMetric(cfg config.MetricConfig, value interface{}) (Metric, error) {
 	var metricValue float64
 
 	if boolValue, ok := value.(bool); ok {

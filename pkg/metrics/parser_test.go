@@ -411,7 +411,7 @@ func TestParser_parseMetric(t *testing.T) {
 			args: args{
 				metricPath: "enabled",
 				deviceID:   "dht22",
-				value:      metricNotConfigured,
+				value:      []int{3},
 			},
 			wantErr: true,
 		},
@@ -421,7 +421,17 @@ func TestParser_parseMetric(t *testing.T) {
 			p := &Parser{
 				metricConfigs: tt.fields.metricConfigs,
 			}
-			got, err := p.parseMetric(tt.args.metricPath, tt.args.deviceID, tt.args.value)
+
+			// Find a valid metrics config
+			config, found := p.findMetricConfig(tt.args.metricPath, tt.args.deviceID)
+			if !found {
+				if !tt.wantErr {
+					t.Errorf("MetricConfig not found")
+				}
+				return
+			}
+
+			got, err := p.parseMetric(config, tt.args.value)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("parseMetric() error = %v, wantErr %v", err, tt.wantErr)
 				return

@@ -1,7 +1,6 @@
 package metrics
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/hikhvar/mqtt2prometheus/pkg/config"
@@ -21,7 +20,14 @@ func NewJSONObjectExtractor(p Parser) Extractor {
 			if rawValue == nil {
 				continue
 			}
-			m, err := p.parseMetric(path, deviceID, rawValue)
+
+			// Find a valid metrics config
+			config, found := p.findMetricConfig(path, deviceID)
+			if !found {
+				continue
+			}
+
+			m, err := p.parseMetric(config, rawValue)
 			if err != nil {
 				return nil, fmt.Errorf("failed to parse valid metric value: %w", err)
 			}
@@ -32,17 +38,21 @@ func NewJSONObjectExtractor(p Parser) Extractor {
 	}
 }
 
-func NewMetricPerTopicExtractor(p Parser, metricName *config.Regexp) Extractor {
+func NewMetricPerTopicExtractor(p Parser, metricNameRegex *config.Regexp) Extractor {
 	return func(topic string, payload []byte, deviceID string) (MetricCollection, error) {
-		mName := metricName.GroupValue(topic, config.MetricNameRegexGroup)
-		if mName == "" {
+		metricName := metricNameRegex.GroupValue(topic, config.MetricNameRegexGroup)
+		if metricName == "" {
 			return nil, fmt.Errorf("failed to find valid metric in topic path")
 		}
-		m, err := p.parseMetric(mName, deviceID, string(payload))
+
+		// Find a valid metrics config
+		config, found := p.findMetricConfig(metricName, deviceID)
+		if !found {
+			return nil, nil
+		}
+
+		m, err := p.parseMetric(config, string(payload))
 		if err != nil {
-			if errors.Is(err, metricNotConfigured) {
-				return nil, nil
-			}
 			return nil, fmt.Errorf("failed to parse metric: %w", err)
 		}
 		m.Topic = topic

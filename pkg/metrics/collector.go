@@ -12,7 +12,7 @@ import (
 
 type Collector interface {
 	prometheus.Collector
-	Observe(deviceID string, collection MetricCollection)
+	Observe(collection MetricCollection)
 }
 
 type MemoryCachedCollector struct {
@@ -27,6 +27,7 @@ type Metric struct {
 	ValueType   prometheus.ValueType
 	IngestTime  time.Time
 	Topic       string
+	DeviceID    string
 }
 
 type CacheItem struct {
@@ -48,13 +49,14 @@ func NewCollector(defaultTimeout time.Duration, possibleMetrics []config.MetricC
 	}
 }
 
-func (c *MemoryCachedCollector) Observe(deviceID string, collection MetricCollection) {
+func (c *MemoryCachedCollector) Observe(collection MetricCollection) {
 	for _, m := range collection {
+		// TODO: Now that DeviceID is part of Metric, perhaps we don't need the CacheItem any more?
 		item := CacheItem{
-			DeviceID: deviceID,
+			DeviceID: m.DeviceID,
 			Metric:   m,
 		}
-		c.cache.Set(fmt.Sprintf("%s-%s", deviceID, m.Description.String()), item, gocache.DefaultExpiration)
+		c.cache.Set(fmt.Sprintf("%s-%s", m.DeviceID, m.Description.String()), item, gocache.DefaultExpiration)
 	}
 }
 

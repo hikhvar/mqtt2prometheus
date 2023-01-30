@@ -65,7 +65,7 @@ var (
 		"[EXPERIMENTAL] Path to configuration file that can enable TLS or authentication for metric scraping.",
 	)
 	usePasswordFromFile = flag.Bool(
-		"use-secret",
+		"treat-mqtt-password-as-file-name",
 		false,
 		"treat MQTT2PROM_MQTT_PASSWORD as a secret file path e.g. /var/run/secrets/mqtt-credential",
 	)
@@ -92,7 +92,7 @@ func main() {
 
 	mqtt_password := os.Getenv("MQTT2PROM_MQTT_PASSWORD")
 	if *usePasswordFromFile {
-		if mqtt_password != "" {
+		if mqtt_password == "" {
 			logger.Fatal("MQTT2PROM_MQTT_PASSWORD is required")
 		}
 		secret, err := ioutil.ReadFile(mqtt_password)

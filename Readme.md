@@ -129,8 +129,8 @@ Usage of ./mqtt2prometheus:
         show the builds version, date and commit
   -web-config-file string
         [EXPERIMENTAL] Path to configuration file that can enable TLS or authentication for metric scraping.
-  -use-secret bool (default: false)
-        treat MQTT2PROM_MQTT_PASSWORD environment variable as a secret file path e.g. /var/run/secrets/mqtt-credential 
+  -treat-mqtt-password-as-file-name bool (default: false)
+        treat MQTT2PROM_MQTT_PASSWORD environment variable as a secret file path e.g. /var/run/secrets/mqtt-credential. Usefule when docker secret or external credential management agents handle the secret file. 
 ```
 The logging is implemented via [zap](https://github.com/uber-go/zap). The logs are printed to `stderr` and valid log levels are
 those supported by zap.  
@@ -271,7 +271,7 @@ Then load that file into the environment before starting the container:
 
 #### Example use with Docker secret (in swarm)
 
-Create a docker secret to store the password(`mqtt-credential` in the example below), and pass the optional `use-secret` command line argument.
+Create a docker secret to store the password(`mqtt-credential` in the example below), and pass the optional `treat-mqtt-password-as-file-name` command line argument.
 ```docker
   mqtt_exporter_tasmota:
     image: ghcr.io/hikhvar/mqtt2prometheus:latest 
@@ -283,7 +283,7 @@ Create a docker secret to store the password(`mqtt-credential` in the example be
     entrypoint:
       - /mqtt2prometheus
       - -log-level=debug
-      - -use-secret=true
+      - -treat-mqtt-password-as-file-name=true
     volumes:
         - config-tasmota.yml:/config.yaml:ro
 ```

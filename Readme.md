@@ -130,7 +130,7 @@ Usage of ./mqtt2prometheus:
   -web-config-file string
         [EXPERIMENTAL] Path to configuration file that can enable TLS or authentication for metric scraping.
   -treat-mqtt-password-as-file-name bool (default: false)
-        treat MQTT2PROM_MQTT_PASSWORD environment variable as a secret file path e.g. /var/run/secrets/mqtt-credential. Usefule when docker secret or external credential management agents handle the secret file. 
+        treat MQTT2PROM_MQTT_PASSWORD environment variable as a secret file path e.g. /var/run/secrets/mqtt-credential. Useful when docker secret or external credential management agents handle the secret file. 
 ```
 The logging is implemented via [zap](https://github.com/uber-go/zap). The logs are printed to `stderr` and valid log levels are
 those supported by zap.  

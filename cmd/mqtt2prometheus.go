@@ -64,6 +64,11 @@ var (
 		"",
 		"[EXPERIMENTAL] Path to configuration file that can enable TLS or authentication for metric scraping.",
 	)
+	usePasswordFromFile = flag.Bool(
+		"treat-mqtt-password-as-file-name",
+		false,
+		"treat MQTT2PROM_MQTT_PASSWORD as a secret file path e.g. /var/run/secrets/mqtt-credential",
+	)
 )
 
 func main() {
@@ -81,13 +86,24 @@ func main() {
 	}
 
 	mqtt_user := os.Getenv("MQTT2PROM_MQTT_USER")
-	mqtt_password := os.Getenv("MQTT2PROM_MQTT_PASSWORD")
-
 	if mqtt_user != "" {
 		cfg.MQTT.User = mqtt_user
 	}
-	if mqtt_password != "" {
-		cfg.MQTT.Password = mqtt_password
+
+	mqtt_password := os.Getenv("MQTT2PROM_MQTT_PASSWORD")
+	if *usePasswordFromFile {
+		if mqtt_password == "" {
+			logger.Fatal("MQTT2PROM_MQTT_PASSWORD is required")
+		}
+		secret, err := ioutil.ReadFile(mqtt_password)
+		if err != nil {
+			logger.Fatal("unable to read mqtt password from secret file", zap.Error(err))
+		}
+		cfg.MQTT.Password = string(secret)
+	} else {
+		if mqtt_password != "" {
+			cfg.MQTT.Password = mqtt_password
+		}
 	}
 
 	mqttClientOptions := mqtt.NewClientOptions()

@@ -75,8 +75,7 @@ nfpms:
       - apk
     conflicts:
       - prometheus-mqtt-exporter
-    scripts:
-      postinstall: systemd/postinstall.sh
+    bindir: /usr/bin
     contents:
       # Simple config file
       - src: config.yaml.dist
@@ -84,6 +83,9 @@ nfpms:
         type: config
       - src: ./systemd/mqtt2prometheus.service
         dst: /etc/systemd/system/mqtt2prometheus.service
+        type: config
+      - src: ./systemd/mqtt2prometheus
+        dst: /etc/default/mqtt2prometheus
         type: config
 
 

@@ -1,0 +1,4 @@
+# Command line options for mqtt2prometheus.service
+# See also /etc/mqtt2prometheus/config.yaml
+
+ARGS="-config /etc/mqtt2prometheus/config.yaml"

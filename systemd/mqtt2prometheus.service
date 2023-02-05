@@ -1,15 +1,47 @@
 [Unit]
 Description=Simple translator from mqtt messages to prometheus. Analog to pushgateway
 Documentation=https://github.com/hikhvar/mqtt2prometheus
+After=network.target
 Before=prometheus.service
 
 [Service]
 Restart=always
-User=mqtt2prometheus
-EnvironmentFile=/etc/default/prometheus-mqtt-exporter
-ExecStart=/opt/mqtt2prometheus/mqtt2prometheus -config /etc/mqtt2prometheus/config.yaml $ARGS
+EnvironmentFile=/etc/default/mqtt2prometheus
+ExecStart=/usr/bin/mqtt2prometheus $ARGS
 TimeoutStopSec=20s
 
+# Extra security hardening options
+# See systemd.exec(5) for more information regarding these options.
+
+# Empty because mqtt2prometheus does not require any special capability. See capabilities(7) for more information.
+CapabilityBoundingSet=
+DynamicUser=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+NoNewPrivileges=true
+PrivateDevices=true
+PrivateTmp=true
+PrivateUsers=true
+ProtectClock=true
+ProtectControlGroups=true
+ProtectHome=true
+ProtectHostname=true
+ProtectKernelLogs=true
+ProtectKernelModules=true
+ProtectKernelTunables=true
+ProtectSystem=strict
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+RestrictNamespaces=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+SystemCallArchitectures=native
+SystemCallErrorNumber=EPERM
+SystemCallFilter=@system-service
+UMask=077
+
+# See systemd.resource-control(5) for more information
+#IPAddressAllow=127.0.0.0/8
+#IPAddressDeny=any # the allow-list is evaluated before the deny list. Since the default is to allow, we need to deny everything.
 
 [Install]
 WantedBy=multi-user.target

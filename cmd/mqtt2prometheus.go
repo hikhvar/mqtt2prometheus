@@ -151,9 +151,11 @@ func main() {
 		time.Sleep(10 * time.Second)
 	}
 
-	prometheus.MustRegister(ingest.Collector())
-	prometheus.MustRegister(collector)
-	http.Handle("/metrics", promhttp.Handler())
+        r := prometheus.NewRegistry()
+        r.MustRegister(ingest.Collector())
+        r.MustRegister(collector)
+        handler := promhttp.HandlerFor(r, promhttp.HandlerOpts{})
+        http.Handle("/metrics", handler)
 	s := &http.Server{
 		Addr:    getListenAddress(),
 		Handler: http.DefaultServeMux,

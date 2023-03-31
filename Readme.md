@@ -170,7 +170,7 @@ mqtt:
  # This is the default. 
  object_per_topic_config:
   # The encoding of the object, currently only json is supported
-  encoding: json
+  encoding: JSON
 cache:
  # Timeout. Each received metric will be presented for this time if no update is send via MQTT.
  # Set the timeout to -1 to disable the deletion of metrics from the cache. The exporter presents the ingest timestamp

@@ -51,7 +51,19 @@ func NewMetricPerTopicExtractor(p Parser, metricNameRegex *config.Regexp) Extrac
 			return nil, nil
 		}
 
-		m, err := p.parseMetric(config, string(payload))
+		var rawValue interface{}
+		if config.PayloadField != "" {
+			parsed := gojsonq.New(gojsonq.SetSeparator(p.separator)).FromString(string(payload))
+			rawValue = parsed.Find(config.PayloadField)
+			parsed.Reset()
+			if rawValue == nil {
+				return nil, fmt.Errorf("failed to extract field %s from payload %s", config.PayloadField, payload)
+			}
+		} else {
+			rawValue = string(payload)
+		}
+
+		m, err := p.parseMetric(config, rawValue)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse metric: %w", err)
 		}

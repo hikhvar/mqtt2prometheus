@@ -130,6 +130,7 @@ type MetricPerTopicConfig struct {
 type MetricConfig struct {
 	PrometheusName     string                    `yaml:"prom_name"`
 	MQTTName           string                    `yaml:"mqtt_name"`
+	PayloadField       string                    `yaml:"payload_field"`
 	SensorNameFilter   Regexp                    `yaml:"sensor_name_filter"`
 	Help               string                    `yaml:"help"`
 	ValueType          string                    `yaml:"type"`

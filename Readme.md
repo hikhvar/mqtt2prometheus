@@ -71,6 +71,12 @@ E.g let's assume the following MQTT JSON message:
 We can now set `json_parsing.seperator` to `/`. This allows us to specify `mqtt_name` as `computed/heat.index`. Keep in mind, 
 `json_parsing.seperator` is a global setting. This affects all `mqtt_name` fields in your configuration.
 
+Some devices like Shelly Plus H&T publish one metric per-topic in a JSON format:
+```
+shellies/shellyplusht-xxx/status/humidity:0 {"id": 0,"rh":51.9}
+```
+You can use PayloadField to extract the desired value.
+
 ### Tasmota
 An example configuration for the tasmota based Gosund SP111 device is given in [examples/gosund_sp111.yaml](examples/gosund_sp111.yaml).
 

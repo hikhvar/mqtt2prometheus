@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
 	"regexp"
 	"time"
 
@@ -26,7 +27,8 @@ var MQTTConfigDefaults = MQTTConfig{
 }
 
 var CacheConfigDefaults = CacheConfig{
-	Timeout: 2 * time.Minute,
+	Timeout:  2 * time.Minute,
+	StateDir: "/var/lib/mqtt2prometheus",
 }
 
 var JsonParsingConfigDefaults = JsonParsingConfig{
@@ -94,7 +96,8 @@ type Config struct {
 }
 
 type CacheConfig struct {
-	Timeout time.Duration `yaml:"timeout"`
+	Timeout  time.Duration `yaml:"timeout"`
+	StateDir string        `yaml:"state_directory"`
 }
 
 type JsonParsingConfig struct {
@@ -135,6 +138,7 @@ type MetricConfig struct {
 	Help               string                    `yaml:"help"`
 	ValueType          string                    `yaml:"type"`
 	OmitTimestamp      bool                      `yaml:"omit_timestamp"`
+	ForceMonotonicy    bool                      `yaml:"force_monotonicy"`
 	ConstantLabels     map[string]string         `yaml:"const_labels"`
 	StringValueMapping *StringValueMappingConfig `yaml:"string_value_mapping"`
 	MQTTValueScale     float64                   `yaml:"mqtt_value_scale"`
@@ -179,6 +183,9 @@ func LoadConfig(configFile string) (Config, error) {
 	if cfg.Cache == nil {
 		cfg.Cache = &CacheConfigDefaults
 	}
+	if cfg.Cache.StateDir == "" {
+		cfg.Cache.StateDir = CacheConfigDefaults.StateDir
+	}
 	if cfg.JsonParsing == nil {
 		cfg.JsonParsing = &JsonParsingConfigDefaults
 	}
@@ -214,6 +221,19 @@ func LoadConfig(configFile string) (Config, error) {
 		}
 		if !validRegex {
 			return Config{}, fmt.Errorf("metric name regex %q does not contain required regex group %q", cfg.MQTT.DeviceIDRegex.pattern, MetricNameRegexGroup)
+		}
+	}
+
+	// If any metric forces monotonicy, we need a state directory.
+	forcesMonotonicy := false
+	for _, m := range cfg.Metrics {
+		if m.ForceMonotonicy {
+			forcesMonotonicy = true
+		}
+	}
+	if forcesMonotonicy {
+		if err := os.MkdirAll(cfg.Cache.StateDir, 0755); err != nil {
+			return Config{}, err
 		}
 	}
 

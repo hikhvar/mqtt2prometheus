@@ -182,6 +182,8 @@ cache:
  # Set the timeout to -1 to disable the deletion of metrics from the cache. The exporter presents the ingest timestamp
  # to prometheus.
  timeout: 24h
+ # Path to the directory to keep the state for monotonic metrics.
+ state_directory: "/var/lib/mqtt2prometheus"
 json_parsing:
  # Separator. Used to split path to elements when accessing json fields.
  # You can access json fields with dots in it. F.E. {"key.name": {"nested": "value"}}
@@ -248,6 +250,18 @@ metrics:
     # Metric value to use if a match cannot be found in the map above.
     # If not specified, parsing error will occur.
     error_value: 1
+  # The name of the metric in prometheus
+ - prom_name: total_energy
+  # The name of the metric in a MQTT JSON message
+   mqtt_name: aenergy.total
+  # Regular expression to only match sensors with the given name pattern
+   sensor_name_filter: "^shellyplus1pm-.*$"
+  # The prometheus help text for this metric
+   help: Total energy used
+  # The prometheus type for this metric. Valid values are: "gauge" and "counter"
+   type: counter
+  # This setting requires an almost monotonic counter as the source. When monotonicy is enforced, the metric value is regularly written to disk. Thus, resets in the source counter can be detected and corrected by adding an offset as if the reset did not happen. The result is a strict monotonic increasing time series, like an ever growing counter.
+   force_monotonicy: true
   
 ```
 

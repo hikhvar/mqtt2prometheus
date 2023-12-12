@@ -138,6 +138,7 @@ type MetricConfig struct {
 	Help               string                    `yaml:"help"`
 	ValueType          string                    `yaml:"type"`
 	OmitTimestamp      bool                      `yaml:"omit_timestamp"`
+	Expression         string                    `yaml:"expression"`
 	ForceMonotonicy    bool                      `yaml:"force_monotonicy"`
 	ConstantLabels     map[string]string         `yaml:"const_labels"`
 	StringValueMapping *StringValueMappingConfig `yaml:"string_value_mapping"`

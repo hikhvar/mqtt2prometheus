@@ -32,7 +32,7 @@ func TestParser_parseMetric(t *testing.T) {
 
 	now = testNow
 	type fields struct {
-		metricConfigs map[string][]config.MetricConfig
+		metricConfigs map[string][]*config.MetricConfig
 	}
 	type args struct {
 		metricPath string
@@ -50,8 +50,8 @@ func TestParser_parseMetric(t *testing.T) {
 		{
 			name: "value without timestamp",
 			fields: fields{
-				map[string][]config.MetricConfig{
-					"temperature": []config.MetricConfig{
+				map[string][]*config.MetricConfig{
+					"temperature": {
 						{
 							PrometheusName: "temperature",
 							ValueType:      "gauge",
@@ -76,8 +76,8 @@ func TestParser_parseMetric(t *testing.T) {
 		{
 			name: "string value",
 			fields: fields{
-				map[string][]config.MetricConfig{
-					"temperature": []config.MetricConfig{
+				map[string][]*config.MetricConfig{
+					"temperature": {
 						{
 							PrometheusName: "temperature",
 							ValueType:      "gauge",
@@ -101,8 +101,8 @@ func TestParser_parseMetric(t *testing.T) {
 		{
 			name: "scaled string value",
 			fields: fields{
-				map[string][]config.MetricConfig{
-					"temperature": []config.MetricConfig{
+				map[string][]*config.MetricConfig{
+					"temperature": {
 						{
 							PrometheusName: "temperature",
 							ValueType:      "gauge",
@@ -127,8 +127,8 @@ func TestParser_parseMetric(t *testing.T) {
 		{
 			name: "string value failure",
 			fields: fields{
-				map[string][]config.MetricConfig{
-					"temperature": []config.MetricConfig{
+				map[string][]*config.MetricConfig{
+					"temperature": {
 						{
 							PrometheusName: "temperature",
 							ValueType:      "gauge",
@@ -146,8 +146,8 @@ func TestParser_parseMetric(t *testing.T) {
 		{
 			name: "float value",
 			fields: fields{
-				map[string][]config.MetricConfig{
-					"temperature": []config.MetricConfig{
+				map[string][]*config.MetricConfig{
+					"temperature": {
 						{
 							PrometheusName: "temperature",
 							ValueType:      "gauge",
@@ -171,8 +171,8 @@ func TestParser_parseMetric(t *testing.T) {
 		{
 			name: "scaled float value",
 			fields: fields{
-				map[string][]config.MetricConfig{
-					"humidity": []config.MetricConfig{
+				map[string][]*config.MetricConfig{
+					"humidity": {
 						{
 							PrometheusName: "humidity",
 							ValueType:      "gauge",
@@ -197,8 +197,8 @@ func TestParser_parseMetric(t *testing.T) {
 		{
 			name: "negative scaled float value",
 			fields: fields{
-				map[string][]config.MetricConfig{
-					"humidity": []config.MetricConfig{
+				map[string][]*config.MetricConfig{
+					"humidity": {
 						{
 							PrometheusName: "humidity",
 							ValueType:      "gauge",
@@ -223,8 +223,8 @@ func TestParser_parseMetric(t *testing.T) {
 		{
 			name: "bool value true",
 			fields: fields{
-				map[string][]config.MetricConfig{
-					"enabled": []config.MetricConfig{
+				map[string][]*config.MetricConfig{
+					"enabled": {
 						{
 							PrometheusName: "enabled",
 							ValueType:      "gauge",
@@ -248,8 +248,8 @@ func TestParser_parseMetric(t *testing.T) {
 		{
 			name: "scaled bool value",
 			fields: fields{
-				map[string][]config.MetricConfig{
-					"enabled": []config.MetricConfig{
+				map[string][]*config.MetricConfig{
+					"enabled": {
 						{
 							PrometheusName: "enabled",
 							ValueType:      "gauge",
@@ -274,8 +274,8 @@ func TestParser_parseMetric(t *testing.T) {
 		{
 			name: "bool value false",
 			fields: fields{
-				map[string][]config.MetricConfig{
-					"enabled": []config.MetricConfig{
+				map[string][]*config.MetricConfig{
+					"enabled": {
 						{
 							PrometheusName: "enabled",
 							ValueType:      "gauge",
@@ -299,8 +299,8 @@ func TestParser_parseMetric(t *testing.T) {
 		{
 			name: "string mapping value success",
 			fields: fields{
-				map[string][]config.MetricConfig{
-					"enabled": []config.MetricConfig{
+				map[string][]*config.MetricConfig{
+					"enabled": {
 						{
 							PrometheusName: "enabled",
 							ValueType:      "gauge",
@@ -330,8 +330,8 @@ func TestParser_parseMetric(t *testing.T) {
 		{
 			name: "string mapping value failure default to error value",
 			fields: fields{
-				map[string][]config.MetricConfig{
-					"enabled": []config.MetricConfig{
+				map[string][]*config.MetricConfig{
+					"enabled": {
 						{
 							PrometheusName: "enabled",
 							ValueType:      "gauge",
@@ -362,8 +362,8 @@ func TestParser_parseMetric(t *testing.T) {
 		{
 			name: "string mapping value failure no error value",
 			fields: fields{
-				map[string][]config.MetricConfig{
-					"enabled": []config.MetricConfig{
+				map[string][]*config.MetricConfig{
+					"enabled": {
 						{
 							PrometheusName: "enabled",
 							ValueType:      "gauge",
@@ -387,8 +387,8 @@ func TestParser_parseMetric(t *testing.T) {
 		{
 			name: "metric not configured",
 			fields: fields{
-				map[string][]config.MetricConfig{
-					"enabled": []config.MetricConfig{
+				map[string][]*config.MetricConfig{
+					"enabled": {
 						{
 							PrometheusName: "enabled",
 							ValueType:      "gauge",
@@ -413,8 +413,8 @@ func TestParser_parseMetric(t *testing.T) {
 		{
 			name: "unexpected type",
 			fields: fields{
-				map[string][]config.MetricConfig{
-					"enabled": []config.MetricConfig{
+				map[string][]*config.MetricConfig{
+					"enabled": {
 						{
 							PrometheusName: "enabled",
 							ValueType:      "gauge",
@@ -439,8 +439,8 @@ func TestParser_parseMetric(t *testing.T) {
 		{
 			name: "monotonic gauge, step 1: initial value",
 			fields: fields{
-				map[string][]config.MetricConfig{
-					"aenergy.total": []config.MetricConfig{
+				map[string][]*config.MetricConfig{
+					"aenergy.total": {
 						{
 							PrometheusName:  "total_energy",
 							ValueType:       "gauge",
@@ -464,8 +464,8 @@ func TestParser_parseMetric(t *testing.T) {
 		{
 			name: "monotonic gauge, step 2: monotonic increase does not add offset",
 			fields: fields{
-				map[string][]config.MetricConfig{
-					"aenergy.total": []config.MetricConfig{
+				map[string][]*config.MetricConfig{
+					"aenergy.total": {
 						{
 							PrometheusName:  "total_energy",
 							ValueType:       "gauge",
@@ -489,8 +489,8 @@ func TestParser_parseMetric(t *testing.T) {
 		{
 			name: "monotonic gauge, step 3: raw metric is reset, last value becomes the new offset",
 			fields: fields{
-				map[string][]config.MetricConfig{
-					"aenergy.total": []config.MetricConfig{
+				map[string][]*config.MetricConfig{
+					"aenergy.total": {
 						{
 							PrometheusName:  "total_energy",
 							ValueType:       "gauge",
@@ -514,8 +514,8 @@ func TestParser_parseMetric(t *testing.T) {
 		{
 			name: "monotonic gauge, step 4: monotonic increase with offset",
 			fields: fields{
-				map[string][]config.MetricConfig{
-					"aenergy.total": []config.MetricConfig{
+				map[string][]*config.MetricConfig{
+					"aenergy.total": {
 						{
 							PrometheusName:  "total_energy",
 							ValueType:       "gauge",
@@ -539,8 +539,8 @@ func TestParser_parseMetric(t *testing.T) {
 		{
 			name: "integrate positive values using expressions, step 1",
 			fields: fields{
-				map[string][]config.MetricConfig{
-					"apower": []config.MetricConfig{
+				map[string][]*config.MetricConfig{
+					"apower": {
 						{
 							PrometheusName: "total_energy",
 							ValueType:      "gauge",
@@ -564,8 +564,8 @@ func TestParser_parseMetric(t *testing.T) {
 		{
 			name: "integrate positive values using expressions, step 2",
 			fields: fields{
-				map[string][]config.MetricConfig{
-					"apower": []config.MetricConfig{
+				map[string][]*config.MetricConfig{
+					"apower": {
 						{
 							PrometheusName: "total_energy",
 							ValueType:      "gauge",
@@ -590,8 +590,8 @@ func TestParser_parseMetric(t *testing.T) {
 		{
 			name: "integrate positive values using expressions, step 3",
 			fields: fields{
-				map[string][]config.MetricConfig{
-					"apower": []config.MetricConfig{
+				map[string][]*config.MetricConfig{
+					"apower": {
 						{
 							PrometheusName: "total_energy",
 							ValueType:      "gauge",
@@ -616,8 +616,8 @@ func TestParser_parseMetric(t *testing.T) {
 		{
 			name: "integrate positive values using expressions, step 4",
 			fields: fields{
-				map[string][]config.MetricConfig{
-					"apower": []config.MetricConfig{
+				map[string][]*config.MetricConfig{
+					"apower": {
 						{
 							PrometheusName: "total_energy",
 							ValueType:      "gauge",
@@ -649,13 +649,14 @@ func TestParser_parseMetric(t *testing.T) {
 			p.metricConfigs = tt.fields.metricConfigs
 
 			// Find a valid metrics config
-			config, found := p.findMetricConfig(tt.args.metricPath, tt.args.deviceID)
-			if !found {
+			configs := p.findMetricConfigs(tt.args.metricPath, tt.args.deviceID)
+			if len(configs) != 1 {
 				if !tt.wantErr {
 					t.Errorf("MetricConfig not found")
 				}
 				return
 			}
+			config := configs[0]
 
 			id := metricID("", tt.args.metricPath, tt.args.deviceID, config.PrometheusName)
 			got, err := p.parseMetric(config, id, tt.args.value)

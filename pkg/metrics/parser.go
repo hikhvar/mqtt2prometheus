@@ -44,7 +44,7 @@ type Parser struct {
 	separator string
 	// Maps the mqtt metric name to a list of configs
 	// The first that matches SensorNameFilter will be used
-	metricConfigs map[string][]config.MetricConfig
+	metricConfigs map[string][]*config.MetricConfig
 	// Directory holding state files
 	stateDir string
 	// Per-metric state
@@ -130,10 +130,10 @@ func defaultExprEnv() map[string]interface{} {
 }
 
 func NewParser(metrics []config.MetricConfig, separator, stateDir string) Parser {
-	cfgs := make(map[string][]config.MetricConfig)
+	cfgs := make(map[string][]*config.MetricConfig)
 	for i := range metrics {
 		key := metrics[i].MQTTName
-		cfgs[key] = append(cfgs[key], metrics[i])
+		cfgs[key] = append(cfgs[key], &metrics[i])
 	}
 	return Parser{
 		separator:     separator,
@@ -144,24 +144,24 @@ func NewParser(metrics []config.MetricConfig, separator, stateDir string) Parser
 }
 
 // Config returns the underlying metrics config
-func (p *Parser) config() map[string][]config.MetricConfig {
+func (p *Parser) config() map[string][]*config.MetricConfig {
 	return p.metricConfigs
 }
 
-// validMetric returns config matching the metric and deviceID
-// Second return value indicates if config was found.
-func (p *Parser) findMetricConfig(metric string, deviceID string) (config.MetricConfig, bool) {
+// validMetric returns all configs matching the metric and deviceID.
+func (p *Parser) findMetricConfigs(metric string, deviceID string) []*config.MetricConfig {
+	configs := []*config.MetricConfig{}
 	for _, c := range p.metricConfigs[metric] {
 		if c.SensorNameFilter.Match(deviceID) {
-			return c, true
+			configs = append(configs, c)
 		}
 	}
-	return config.MetricConfig{}, false
+	return configs
 }
 
 // parseMetric parses the given value according to the given deviceID and metricPath. The config allows to
 // parse a metric value according to the device ID.
-func (p *Parser) parseMetric(cfg config.MetricConfig, metricID string, value interface{}) (Metric, error) {
+func (p *Parser) parseMetric(cfg *config.MetricConfig, metricID string, value interface{}) (Metric, error) {
 	var metricValue float64
 	var err error
 

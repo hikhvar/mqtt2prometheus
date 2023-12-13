@@ -234,7 +234,7 @@ func LoadConfig(configFile string) (Config, error) {
 	}
 	if forcesMonotonicy {
 		if err := os.MkdirAll(cfg.Cache.StateDir, 0755); err != nil {
-			return Config{}, err
+			return Config{}, fmt.Errorf("failed to create directory %q: %w", cfg.Cache.StateDir, err)
 		}
 	}
 

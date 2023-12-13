@@ -328,7 +328,7 @@ func (p *Parser) evalExpression(metricID, code string, value float64) (float64, 
 		ms.env = defaultExprEnv()
 		ms.program, err = expr.Compile(code, expr.Env(ms.env), expr.AsFloat64())
 		if err != nil {
-			return value, fmt.Errorf("failed to compile expression %q: %v", code, err)
+			return value, fmt.Errorf("failed to compile expression %q: %w", code, err)
 		}
 		// Trigger flushing the new state to disk.
 		ms.lastWritten = time.Time{}
@@ -346,7 +346,7 @@ func (p *Parser) evalExpression(metricID, code string, value float64) (float64, 
 
 	result, err := expr.Run(ms.program, ms.env)
 	if err != nil {
-		return value, fmt.Errorf("failed to evaluate expression %q: %v", code, err)
+		return value, fmt.Errorf("failed to evaluate expression %q: %w", code, err)
 	}
 	// Type was statically checked above.
 	ret := result.(float64)

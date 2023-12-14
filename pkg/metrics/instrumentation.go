@@ -13,14 +13,14 @@ const (
 var defaultInstrumentation = instrumentation{
 	messageMetric: prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: "received_messages",
-			Help: "received messages per topic and status",
+			Name: "mqtt2prometheus_received_messages_total",
+			Help: "Total number of messages received per topic and status",
 		}, []string{"status", "topic"},
 	),
 	connectedMetric: prometheus.NewGauge(
 		prometheus.GaugeOpts{
 			Name: "mqtt2prometheus_connected",
-			Help: "is the mqtt2prometheus exporter connected to the broker",
+			Help: "Whether the mqtt2prometheus exporter is connected to the broker",
 		},
 	),
 }

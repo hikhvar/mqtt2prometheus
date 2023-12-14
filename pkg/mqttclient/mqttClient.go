@@ -6,7 +6,7 @@ import (
 )
 
 type SubscribeOptions struct {
-	Topic             string
+	Topic             []string
 	QoS               byte
 	OnMessageReceived mqtt.MessageHandler
 	Logger            *zap.Logger
@@ -18,9 +18,11 @@ func Subscribe(connectionOptions *mqtt.ClientOptions, subscribeOptions Subscribe
 		logger := subscribeOptions.Logger
 		oldConnect(client)
 		logger.Info("Connected to MQTT Broker")
-		logger.Info("Will subscribe to topic", zap.String("topic", subscribeOptions.Topic))
-		if token := client.Subscribe(subscribeOptions.Topic, subscribeOptions.QoS, subscribeOptions.OnMessageReceived); token.Wait() && token.Error() != nil {
-			logger.Error("Could not subscribe", zap.Error(token.Error()))
+		for _, topic := range subscribeOptions.Topic {
+			logger.Info("Will subscribe to topic", zap.String("topic", topic))
+			if token := client.Subscribe(topic, subscribeOptions.QoS, subscribeOptions.OnMessageReceived); token.Wait() && token.Error() != nil {
+				logger.Error("Could not subscribe", zap.Error(token.Error()))
+			}
 		}
 	}
 	client := mqtt.NewClient(connectionOptions)

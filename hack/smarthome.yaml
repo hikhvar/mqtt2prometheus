@@ -1,0 +1,90 @@
+qtt:
+  server: tcp://127.0.0.1:1883
+  user: someuser
+  password: somepassword
+  topic_path:
+    - zigbee2mqtt/0x00124b22292b470a
+    - Viessmann/status/json
+    - tele/tasmota_6DD88C/SENSOR
+  device_id_regex:
+    - zigbee2mqtt/(?P<deviceid>(.+))
+    - (?P<deviceid>(Viessmann))/status/json
+    - tele/(?P<deviceid>(tasmota_.+))/SENSOR
+metrics:
+# for a zigbee briged sonoff temperature sensor
+  - prom_name: Temperature
+    mqtt_name: temperature
+    help: current power
+    type: gauge
+  - prom_name: Humidity
+    mqtt_name: humidity
+    help: total used
+    type: gauge
+  - prom_name: Battery
+    mqtt_name: battery
+    help: total used
+    type: gauge
+
+# for a tasmota esp driven main power meter
+  - prom_name: Power_curr
+    mqtt_name: .Power_curr
+    help: current power
+    type: gauge
+  - prom_name: Total_in
+    mqtt_name: .Total_in
+    help: total used
+    type: counter
+
+# for a viessmann kw100 heating system
+  - prom_name: getTempA
+    mqtt_name: getTempA
+    help: current power
+    type: gauge
+  - prom_name: getTempWWist
+    mqtt_name: getTempWWist
+    help: total used
+    type: gauge
+  - prom_name: getTempKist
+    mqtt_name: getTempKist
+    help: current power
+    type: gauge
+  - prom_name: getTempKsoll
+    mqtt_name: getTempKsoll
+    help: current power
+    type: gauge
+  - prom_name: getBrennerStatus
+    mqtt_name: getBrennerStatus
+    help: current power
+    type: gauge
+  - prom_name: getBrennerStarts
+    mqtt_name: getBrennerStarts
+    help: current power
+    type: counter
+  - prom_name: getBrennerStunden1
+    mqtt_name: getBrennerStunden1
+    help: current power
+    type: counter
+  - prom_name: getBrennerStunden2
+    mqtt_name: getBrennerStunden2
+    help: current power
+    type: counter
+  - prom_name: getPumpeStatusM1
+    mqtt_name: getPumpeStatusM1
+    help: current power
+    type: gauge
+  - prom_name: getStatusStoerung
+    mqtt_name: getStatusStoerung
+    help: current power
+    type: gauge
+  - prom_name: getBrennerStoerung
+    mqtt_name: getBrennerStoerung
+    help: current power
+    type: gauge
+  - prom_name: getPumpeTankStatus
+    mqtt_name: getPumpeTankStatus
+    help: current power
+    type: gauge
+  - prom_name: getPumpeZStatus
+    mqtt_name: getPumpeZStatus
+    help: current power
+    type: gauge

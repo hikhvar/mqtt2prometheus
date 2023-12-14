@@ -11,12 +11,12 @@ import (
 type Ingest struct {
 	instrumentation
 	extractor     Extractor
-	deviceIDRegex *config.Regexp
+	deviceIDRegex []*config.Regexp
 	collector     Collector
 	logger        *zap.Logger
 }
 
-func NewIngest(collector Collector, extractor Extractor, deviceIDRegex *config.Regexp) *Ingest {
+func NewIngest(collector Collector, extractor Extractor, deviceIDRegex []*config.Regexp) *Ingest {
 
 	return &Ingest{
 		instrumentation: defaultInstrumentation,
@@ -52,5 +52,10 @@ func (i *Ingest) SetupSubscriptionHandler(errChan chan<- error) mqtt.MessageHand
 
 // deviceID uses the configured DeviceIDRegex to extract the device ID from the given mqtt topic path.
 func (i *Ingest) deviceID(topic string) string {
-	return i.deviceIDRegex.GroupValue(topic, config.DeviceIDRegexGroup)
+	for _, deviceIDRegex := range i.deviceIDRegex {
+		if deviceIDRegex.Match(topic) {
+			return deviceIDRegex.GroupValue(topic, config.DeviceIDRegexGroup)
+		}
+	}
+	return ""
 }

@@ -20,8 +20,8 @@ const (
 
 var MQTTConfigDefaults = MQTTConfig{
 	Server:        "tcp://127.0.0.1:1883",
-	TopicPath:     "v1/devices/me",
-	DeviceIDRegex: MustNewRegexp(fmt.Sprintf("(.*/)?(?P<%s>.*)", DeviceIDRegexGroup)),
+	TopicPath:     []string{"v1/devices/me"},
+	DeviceIDRegex: []*Regexp{MustNewRegexp(fmt.Sprintf("(.*/)?(?P<%s>.*)", DeviceIDRegexGroup))},
 	QoS:           0,
 }
 
@@ -105,8 +105,8 @@ type JsonParsingConfig struct {
 
 type MQTTConfig struct {
 	Server               string                `yaml:"server"`
-	TopicPath            string                `yaml:"topic_path"`
-	DeviceIDRegex        *Regexp               `yaml:"device_id_regex"`
+	TopicPath            []string              `yaml:"topic_path"`
+	DeviceIDRegex        []*Regexp             `yaml:"device_id_regex"`
 	User                 string                `yaml:"user"`
 	Password             string                `yaml:"password"`
 	QoS                  byte                  `yaml:"qos"`
@@ -187,13 +187,15 @@ func LoadConfig(configFile string) (Config, error) {
 		cfg.MQTT.DeviceIDRegex = MQTTConfigDefaults.DeviceIDRegex
 	}
 	var validRegex bool
-	for _, name := range cfg.MQTT.DeviceIDRegex.RegEx().SubexpNames() {
-		if name == DeviceIDRegexGroup {
-			validRegex = true
+	for _, deviceIDregex := range cfg.MQTT.DeviceIDRegex {
+		for _, name := range deviceIDregex.RegEx().SubexpNames() {
+			if name == DeviceIDRegexGroup {
+				validRegex = true
+			}
 		}
-	}
-	if !validRegex {
-		return Config{}, fmt.Errorf("device id regex %q does not contain required regex group %q", cfg.MQTT.DeviceIDRegex.pattern, DeviceIDRegexGroup)
+		if !validRegex {
+			return Config{}, fmt.Errorf("device id regex %q does not contain required regex group %q", deviceIDregex.pattern, DeviceIDRegexGroup)
+		}
 	}
 
 	if cfg.MQTT.ObjectPerTopicConfig != nil && cfg.MQTT.MetricPerTopicConfig != nil {
@@ -214,7 +216,7 @@ func LoadConfig(configFile string) (Config, error) {
 			}
 		}
 		if !validRegex {
-			return Config{}, fmt.Errorf("metric name regex %q does not contain required regex group %q", cfg.MQTT.DeviceIDRegex.pattern, MetricNameRegexGroup)
+			return Config{}, fmt.Errorf("metric name regex %q does not contain required regex group %q", cfg.MQTT.MetricPerTopicConfig.MetricNameRegex.pattern, MetricNameRegexGroup)
 		}
 	}
 

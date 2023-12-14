@@ -11,7 +11,8 @@ mqtt:
   # that the last "element" of the topic_path is the device id.
   # The regular expression must contain a named capture group with the name deviceid
   # For example the expression for tasamota based sensors is "tele/(?P<deviceid>.*)/.*"
-  device_id_regex: "tele/(?P<deviceid>.*)/SENSOR"
+  device_id_regex:
+    - "tele/(?P<deviceid>.*)/SENSOR"
   # The MQTT QoS level
   qos: 0
 cache:

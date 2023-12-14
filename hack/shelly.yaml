@@ -1,7 +1,8 @@
 mqtt:
   server: tcp://mosquitto:1883
   topic_path: shellies/+/sensor/+
-  device_id_regex: "shellies/(?P<deviceid>.*)/sensor"
+  device_id_regex:
+    - "shellies/(?P<deviceid>.*)/sensor"
   metric_per_topic_config:
     metric_name_regex: "shellies/(?P<deviceid>.*)/sensor/(?P<metricname>.*)"
   qos: 0

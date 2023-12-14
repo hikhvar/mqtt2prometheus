@@ -18,6 +18,7 @@ This exporter makes some assumptions about the MQTT topics. This exporter assume
 client publish the metrics into a dedicated topic. The regular expression in the configuration field `mqtt.device_id_regex`
 defines how to extract the device ID from the MQTT topic. This allows an arbitrary place of the device ID in the mqtt topic.
 For example the [tasmota](https://github.com/arendst/Tasmota) firmware pushes the telemetry data to the topics `tele/<deviceid>/SENSOR`.
+The regex supports an list of multiple pattern to probe the topic for.
 
 Let us assume the default configuration from [configuration file](#config-file). A sensor publishes the following message
 ```json
@@ -34,6 +35,7 @@ humidity{sensor="livingroom",topic="devices/home/livingroom"} 51.6
 
 The label `sensor` is extracted with the default `device_id_regex` `(.*/)?(?P<deviceid>.*)` from the MQTT topic `devices/home/livingroom`.
 The `device_id_regex` is able to extract exactly one label from the topic path. It extracts only the `deviceid` regex capture group into the `sensor` prometheus label.
+But multiple regex patterns are supported ant the topic will be probed for.
 To extract more labels from the topic path, have a look at [this FAQ answer](#extract-more-labels-from-the-topic-path).
 
 The topic path can contain multiple wildcards. MQTT has two wildcards: 
@@ -158,7 +160,8 @@ mqtt:
  # that the last "element" of the topic_path is the device id.
  # The regular expression must contain a named capture group with the name deviceid
  # For example the expression for tasamota based sensors is "tele/(?P<deviceid>.*)/.*"
- device_id_regex: "(.*/)?(?P<deviceid>.*)"
+ device_id_regex:
+  - "(.*/)?(?P<deviceid>.*)"
  # The MQTT QoS level
  qos: 0
  # NOTE: Only one of metric_per_topic_config or object_per_topic_config should be specified in the configuration

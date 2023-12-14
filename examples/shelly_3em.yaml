@@ -32,7 +32,8 @@ mqtt:
   topic_path: shellies/shellyem3-123456789/emeter/+/+
 
   # Use the phase number as device_id in order to see all three phases in /metrics
-  device_id_regex: "shellies/(.*)/emeter/(?P<deviceid>.*)/.*"
+  device_id_regex:
+    - "shellies/(.*)/emeter/(?P<deviceid>.*)/.*"
 
   # Metrics are being published on a per-topic basis.
   metric_per_topic_config:

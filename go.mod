@@ -10,5 +10,4 @@ require (
 	github.com/prometheus/exporter-toolkit v0.7.3
 	github.com/thedevsaddam/gojsonq/v2 v2.5.2
 	go.uber.org/zap v1.16.0
-	gopkg.in/yaml.v2 v2.4.0
 )

@@ -2,12 +2,12 @@ package config
 
 import (
 	"fmt"
+	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"regexp"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"gopkg.in/yaml.v2"
 )
 
 const (
@@ -87,6 +87,8 @@ func MustNewRegexp(pattern string) *Regexp {
 }
 
 type Config struct {
+	Interface   string             `yaml:"interface"`
+	Port        string             `yaml:"port"`
 	JsonParsing *JsonParsingConfig `yaml:"json_parsing,omitempty"`
 	Metrics     []MetricConfig     `yaml:"metrics"`
 	MQTT        *MQTTConfig        `yaml:"mqtt,omitempty"`

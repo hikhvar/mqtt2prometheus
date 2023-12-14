@@ -38,16 +38,6 @@ var (
 		"config.yaml",
 		"config file",
 	)
-	portFlag = flag.String(
-		"listen-port",
-		"9641",
-		"HTTP port used to expose metrics",
-	)
-	addressFlag = flag.String(
-		"listen-address",
-		"0.0.0.0",
-		"listen address for HTTP server used to expose metrics",
-	)
 	versionFlag = flag.Bool(
 		"version",
 		false,
@@ -151,13 +141,13 @@ func main() {
 		time.Sleep(10 * time.Second)
 	}
 
-        r := prometheus.NewRegistry()
-        r.MustRegister(ingest.Collector())
-        r.MustRegister(collector)
-        handler := promhttp.HandlerFor(r, promhttp.HandlerOpts{})
-        http.Handle("/metrics", handler)
+	r := prometheus.NewRegistry()
+	r.MustRegister(ingest.Collector())
+	r.MustRegister(collector)
+	handler := promhttp.HandlerFor(r, promhttp.HandlerOpts{})
+	http.Handle("/metrics", handler)
 	s := &http.Server{
-		Addr:    getListenAddress(),
+		Addr:    getListenAddress(cfg),
 		Handler: http.DefaultServeMux,
 	}
 	go func() {
@@ -178,8 +168,8 @@ func main() {
 	}
 }
 
-func getListenAddress() string {
-	return fmt.Sprintf("%s:%s", *addressFlag, *portFlag)
+func getListenAddress(cfg config.Config) string {
+	return fmt.Sprintf("%s:%s", cfg.Interface, cfg.Port)
 }
 
 func mustShowVersion() {

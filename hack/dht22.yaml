@@ -1,8 +1,8 @@
-# Settings for the MQTT Client. Currently only these three are supported
 # listen address for HTTP server used to expose metrics
 interface: 0.0.0.0
 # HTTP port used to expose metrics
 port: 9641
+# Settings for the MQTT Client. Currently only these three are supported
 mqtt:
   # The MQTT broker to connect to
   server: tcp://mosquitto:1883

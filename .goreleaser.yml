@@ -45,8 +45,7 @@ builds:
     - hardfloat
     - softfloat
 archives:
-- name_template:
-    name_template: >-
+- name_template: >-
       {{- .ProjectName }}_
       {{- .Version }}_
       {{- title .Os }}_

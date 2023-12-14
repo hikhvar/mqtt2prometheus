@@ -15,7 +15,6 @@ func TestNewJSONObjectExtractor_parseMetric(t *testing.T) {
 	}
 	type args struct {
 		metricPath string
-		deviceID   string
 		value      string
 	}
 	tests := []struct {
@@ -37,13 +36,13 @@ func TestNewJSONObjectExtractor_parseMetric(t *testing.T) {
 							PrometheusName: "temperature",
 							MQTTName:       "SDS0X1.PM2.5",
 							ValueType:      "gauge",
+							DeviceIDRegex:  config.MQTTConfigDefaults.DeviceIDRegex,
 						},
 					},
 				},
 			},
 			args: args{
-				metricPath: "topic",
-				deviceID:   "dht22",
+				metricPath: "devices/dht22",
 				value:      "{\"SDS0X1\":{\"PM2\":{\"5\":4.9}}}",
 			},
 			want: Metric{
@@ -51,7 +50,8 @@ func TestNewJSONObjectExtractor_parseMetric(t *testing.T) {
 				ValueType:   prometheus.GaugeValue,
 				Value:       4.9,
 				IngestTime:  testNow(),
-				Topic:       "topic",
+				Topic:       "devices/dht22",
+				DeviceID:    "dht22",
 			},
 		}, {
 			name:      "string value with dots in path",
@@ -63,13 +63,13 @@ func TestNewJSONObjectExtractor_parseMetric(t *testing.T) {
 							PrometheusName: "temperature",
 							MQTTName:       "SDS0X1->PM2.5",
 							ValueType:      "gauge",
+							DeviceIDRegex:  config.MQTTConfigDefaults.DeviceIDRegex,
 						},
 					},
 				},
 			},
 			args: args{
-				metricPath: "topic",
-				deviceID:   "dht22",
+				metricPath: "devices/dht22",
 				value:      "{\"SDS0X1\":{\"PM2.5\":4.9,\"PM10\":8.5}}",
 			},
 			want: Metric{
@@ -77,7 +77,8 @@ func TestNewJSONObjectExtractor_parseMetric(t *testing.T) {
 				ValueType:   prometheus.GaugeValue,
 				Value:       4.9,
 				IngestTime:  testNow(),
-				Topic:       "topic",
+				Topic:       "devices/dht22",
+				DeviceID:    "dht22",
 			},
 		}, {
 			name:      "metric matching SensorNameFilter",
@@ -90,13 +91,13 @@ func TestNewJSONObjectExtractor_parseMetric(t *testing.T) {
 							MQTTName:         "temperature",
 							ValueType:        "gauge",
 							SensorNameFilter: *config.MustNewRegexp(".*22$"),
+							DeviceIDRegex:    config.MQTTConfigDefaults.DeviceIDRegex,
 						},
 					},
 				},
 			},
 			args: args{
-				metricPath: "topic",
-				deviceID:   "dht22",
+				metricPath: "devices/dht22",
 				value:      "{\"temperature\": 8.5}",
 			},
 			want: Metric{
@@ -104,7 +105,8 @@ func TestNewJSONObjectExtractor_parseMetric(t *testing.T) {
 				ValueType:   prometheus.GaugeValue,
 				Value:       8.5,
 				IngestTime:  testNow(),
-				Topic:       "topic",
+				Topic:       "devices/dht22",
+				DeviceID:    "dht22",
 			},
 		}, {
 			name:      "metric not matching SensorNameFilter",
@@ -117,17 +119,44 @@ func TestNewJSONObjectExtractor_parseMetric(t *testing.T) {
 							MQTTName:         "temperature",
 							ValueType:        "gauge",
 							SensorNameFilter: *config.MustNewRegexp(".*fail$"),
+							DeviceIDRegex:    config.MQTTConfigDefaults.DeviceIDRegex,
 						},
 					},
 				},
 			},
 			args: args{
-				metricPath: "topic",
-				deviceID:   "dht22",
+				metricPath: "devices/dht22",
 				value:      "{\"temperature\": 8.5}",
 			},
 			want:    Metric{},
 			noValue: true,
+		}, {
+			name:      "custom deviceID regex",
+			separator: ".",
+			fields: fields{
+				map[string][]config.MetricConfig{
+					"temperature": []config.MetricConfig{
+						{
+							PrometheusName: "temperature",
+							MQTTName:       "temperature",
+							ValueType:      "gauge",
+							DeviceIDRegex:  config.MustNewRegexp("(.*/)?(?P<deviceid>.*)/SENSOR"),
+						},
+					},
+				},
+			},
+			args: args{
+				metricPath: "devices/dht22/SENSOR",
+				value:      "{\"temperature\": 8.5}",
+			},
+			want: Metric{
+				Description: prometheus.NewDesc("temperature", "", []string{"sensor", "topic"}, nil),
+				ValueType:   prometheus.GaugeValue,
+				Value:       8.5,
+				IngestTime:  testNow(),
+				Topic:       "devices/dht22/SENSOR",
+				DeviceID:    "dht22",
+			},
 		},
 	}
 	for _, tt := range tests {
@@ -138,7 +167,7 @@ func TestNewJSONObjectExtractor_parseMetric(t *testing.T) {
 			}
 			extractor := NewJSONObjectExtractor(p)
 
-			got, err := extractor(tt.args.metricPath, []byte(tt.args.value), tt.args.deviceID)
+			got, err := extractor(tt.args.metricPath, []byte(tt.args.value))
 			if (err != nil) != tt.wantErr {
 				t.Errorf("parseMetric() error = %v, wantErr %v", err, tt.wantErr)
 				return

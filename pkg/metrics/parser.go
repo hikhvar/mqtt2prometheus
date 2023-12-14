@@ -34,15 +34,17 @@ func (p *Parser) config() map[string][]config.MetricConfig {
 	return p.metricConfigs
 }
 
-// validMetric returns config matching the metric and deviceID
-// Second return value indicates if config was found.
-func (p *Parser) findMetricConfig(metric string, deviceID string) (config.MetricConfig, bool) {
+// validMetric returns config matching the metric and the deviceID extracted from the topic
+// Third return value indicates if config was found.
+func (p *Parser) findMetricConfig(metric string, topic string) (config.MetricConfig, string, bool) {
 	for _, c := range p.metricConfigs[metric] {
-		if c.SensorNameFilter.Match(deviceID) {
-			return c, true
+		// use DeviceIDRegex to extract the device ID from the given mqtt topic path
+		deviceId := c.DeviceIDRegex.GroupValue(topic, config.DeviceIDRegexGroup)
+		if c.SensorNameFilter.Match(deviceId) {
+			return c, deviceId, true
 		}
 	}
-	return config.MetricConfig{}, false
+	return config.MetricConfig{}, "", false
 }
 
 // parseMetric parses the given value according to the given deviceID and metricPath. The config allows to

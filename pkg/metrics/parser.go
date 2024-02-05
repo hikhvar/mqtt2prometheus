@@ -2,6 +2,7 @@ package metrics
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"strconv"
 	"strings"
@@ -151,8 +152,8 @@ func (p *Parser) stateFileName(metricID string) string {
 // readMetricState parses the metric state from the configured path.
 // If the file does not exist, an empty state is returned.
 func (p *Parser) readMetricState(metricID string) (*metricState, error) {
-	data, err := os.ReadFile(p.stateFileName(metricID))
 	state := &metricState{}
+	f, err := os.Open(p.stateFileName(metricID))
 	if err != nil {
 		// The file does not exist for new metrics.
 		if os.IsNotExist(err) {
@@ -160,6 +161,16 @@ func (p *Parser) readMetricState(metricID string) (*metricState, error) {
 		}
 		return state, err
 	}
+	defer f.Close()
+
+	var data []byte
+	if info, err := f.Stat(); err == nil {
+		data = make([]byte, int(info.Size()))
+	}
+	if _, err := f.Read(data); err != nil && err != io.EOF {
+		return state, err
+	}
+
 	err = yaml.UnmarshalStrict(data, &state.monotonic)
 	state.lastWritten = now()
 	return state, err
@@ -171,7 +182,13 @@ func (p *Parser) writeMetricState(metricID string, state *metricState) error {
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(p.stateFileName(metricID), out, 0644)
+	f, err := os.OpenFile(p.stateFileName(metricID), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+	if err != nil {
+		return err
+	}
+	_, err = f.Write(out)
+	f.Close()
+	return err
 }
 
 // getMetricState returns the state of the given metric.

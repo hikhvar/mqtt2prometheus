@@ -101,6 +101,10 @@ docker run -it -v "$(pwd)/config.yaml:/config.yaml"  -p  9641:9641 ghcr.io/hikhv
 Please have a look at the [latest relase](https://github.com/hikhvar/mqtt2prometheus/releases/latest) to get a stable image tag. The latest tag may break at any moment in time since latest is pushed into the registries on every git commit in the master branch. 
 
 #### Build The Image locally
+To build a docker Image for your target system you can use the Dockerfile you need. After cloning the repository:
+```bash
+docker build -t mqtt2prometheus:arm -f Armv8Dockerfile .
+```
 To build a docker container with the mqtt2prometheus exporter included run:
 
 ```bash
@@ -111,6 +115,11 @@ To run the container with a given config file:
 
 ```bash
 docker run -it -v "$(pwd)/config.yaml:/config.yaml"  -p 9641:9641 mqtt2prometheus:latest 
+```
+To run the mqtt2prometheus with another port 
+
+```bash
+docker run -it -v "$(pwd)/config.yaml:/config.yaml" -e PORT=9990 -p 9990:9990 mqtt2prometheus:latest 
 ```
 
 ## Configuration
@@ -254,6 +263,8 @@ metrics:
 ### Environment Variables
 
 Having the MQTT login details in the config file runs the risk of publishing them to a version control system. To avoid this, you can supply these parameters via environment variables. MQTT2Prometheus will look for `MQTT2PROM_MQTT_USER` and `MQTT2PROM_MQTT_PASSWORD` in the local environment and load them on startup.
+Also we can change the main port of MQTT2Prometheus
+by using `PORT` environment.
 
 #### Example use with Docker
 
@@ -270,6 +281,7 @@ Then load that file into the environment before starting the container:
   docker run -it \
   -e MQTT2PROM_MQTT_USER \
   -e MQTT2PROM_MQTT_PASSWORD \
+  -e PORT=9990  \
   -v "$(pwd)/examples/config.yaml:/config.yaml" \
   -p 9641:9641 \
   ghcr.io/hikhvar/mqtt2prometheus:latest

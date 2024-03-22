@@ -40,7 +40,7 @@ var (
 	)
 	portFlag = flag.String(
 		"listen-port",
-		"9641",
+		portgetter(),
 		"HTTP port used to expose metrics",
 	)
 	addressFlag = flag.String(
@@ -267,4 +267,13 @@ func newTLSConfig(cfg config.Config) (*tls.Config, error) {
 		InsecureSkipVerify: false,
 		Certificates:       []tls.Certificate{cert},
 	}, nil
+}
+func portgetter() string {
+	port := os.Getenv("PORT")
+	if port != "" {
+		return port
+	} else {
+		return "9641"
+	}
+
 }

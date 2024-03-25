@@ -2,12 +2,23 @@ package metrics
 
 import (
 	"fmt"
+	"regexp"
 
 	"github.com/hikhvar/mqtt2prometheus/pkg/config"
 	gojsonq "github.com/thedevsaddam/gojsonq/v2"
 )
 
 type Extractor func(topic string, payload []byte, deviceID string) (MetricCollection, error)
+
+// metricID returns a deterministic identifier per metic config which is safe to use in a file path.
+func metricID(topic, metric, deviceID, promName string) string {
+	re := regexp.MustCompile(`[^a-zA-Z0-9]`)
+	deviceID = re.ReplaceAllString(deviceID, "_")
+	topic = re.ReplaceAllString(topic, "_")
+	metric = re.ReplaceAllString(metric, "_")
+	promName = re.ReplaceAllString(promName, "_")
+	return fmt.Sprintf("%s-%s-%s-%s", deviceID, topic, metric, promName)
+}
 
 func NewJSONObjectExtractor(p Parser) Extractor {
 	return func(topic string, payload []byte, deviceID string) (MetricCollection, error) {
@@ -27,7 +38,8 @@ func NewJSONObjectExtractor(p Parser) Extractor {
 				continue
 			}
 
-			m, err := p.parseMetric(config, rawValue)
+			id := metricID(topic, path, deviceID, config.PrometheusName)
+			m, err := p.parseMetric(config, id, rawValue)
 			if err != nil {
 				return nil, fmt.Errorf("failed to parse valid metric value: %w", err)
 			}
@@ -63,7 +75,8 @@ func NewMetricPerTopicExtractor(p Parser, metricNameRegex *config.Regexp) Extrac
 			rawValue = string(payload)
 		}
 
-		m, err := p.parseMetric(config, rawValue)
+		id := metricID(topic, metricName, deviceID, config.PrometheusName)
+		m, err := p.parseMetric(config, id, rawValue)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse metric: %w", err)
 		}

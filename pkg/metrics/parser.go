@@ -3,48 +3,137 @@ package metrics
 import (
 	"fmt"
 	"io"
+	"math"
 	"os"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/antonmedv/expr"
+	"github.com/antonmedv/expr/vm"
 	"github.com/hikhvar/mqtt2prometheus/pkg/config"
 	"gopkg.in/yaml.v2"
 )
 
-// monotonicState holds the runtime information to realize a monotonic increasing value.
-type monotonicState struct {
+// dynamicState holds the runtime information for dynamic metric configs.
+type dynamicState struct {
 	// Basline value to add to each parsed metric value to maintain monotonicy
 	Offset float64 `yaml:"value_offset"`
 	// Last value that was parsed before the offset was added
 	LastRawValue float64 `yaml:"last_raw_value"`
+	// Last value that was used for evaluating the given expression
+	LastExprValue float64 `yaml:"last_expr_value"`
+	// Last result returned from evaluating the given expression
+	LastExprResult float64 `yaml:"last_expr_result"`
+	// Last result returned from evaluating the given expression
+	LastExprTimestamp time.Time `yaml:"last_expr_timestamp"`
 }
 
 // metricState holds runtime information per metric configuration.
 type metricState struct {
-	monotonic monotonicState
+	dynamic dynamicState
 	// The last time the state file was written
 	lastWritten time.Time
+	// Compiled evaluation expression
+	program *vm.Program
+	// Environment in which the expression is evaluated
+	env map[string]interface{}
 }
 
 type Parser struct {
 	separator string
 	// Maps the mqtt metric name to a list of configs
 	// The first that matches SensorNameFilter will be used
-	metricConfigs map[string][]config.MetricConfig
+	metricConfigs map[string][]*config.MetricConfig
 	// Directory holding state files
 	stateDir string
 	// Per-metric state
 	states map[string]*metricState
 }
 
+// Identifiers within the expression evaluation environment.
+const (
+	env_value       = "value"
+	env_last_value  = "last_value"
+	env_last_result = "last_result"
+	env_elapsed     = "elapsed"
+	env_now         = "now"
+	env_int         = "int"
+	env_float       = "float"
+	env_round       = "round"
+	env_ceil        = "ceil"
+	env_floor       = "floor"
+	env_abs         = "abs"
+	env_min         = "min"
+	env_max         = "max"
+)
+
 var now = time.Now
 
+func toInt64(i interface{}) int64 {
+	switch v := i.(type) {
+	case float32:
+		return int64(v)
+	case float64:
+		return int64(v)
+	case int:
+		return int64(v)
+	case int32:
+		return int64(v)
+	case int64:
+		return v
+	case time.Duration:
+		return int64(v)
+	default:
+		return v.(int64) // Hope for the best
+	}
+}
+
+func toFloat64(i interface{}) float64 {
+	switch v := i.(type) {
+	case float32:
+		return float64(v)
+	case float64:
+		return v
+	case int:
+		return float64(v)
+	case int32:
+		return float64(v)
+	case int64:
+		return float64(v)
+	case time.Duration:
+		return float64(v)
+	default:
+		return v.(float64) // Hope for the best
+	}
+}
+
+// defaultExprEnv returns the default environment for expression evaluation.
+func defaultExprEnv() map[string]interface{} {
+	return map[string]interface{}{
+		// Variables
+		env_value:       0.0,
+		env_last_value:  0.0,
+		env_last_result: 0.0,
+		env_elapsed:     time.Duration(0),
+		// Functions
+		env_now:   now,
+		env_int:   toInt64,
+		env_float: toFloat64,
+		env_round: math.Round,
+		env_ceil:  math.Ceil,
+		env_floor: math.Floor,
+		env_abs:   math.Abs,
+		env_min:   math.Min,
+		env_max:   math.Max,
+	}
+}
+
 func NewParser(metrics []config.MetricConfig, separator, stateDir string) Parser {
-	cfgs := make(map[string][]config.MetricConfig)
+	cfgs := make(map[string][]*config.MetricConfig)
 	for i := range metrics {
 		key := metrics[i].MQTTName
-		cfgs[key] = append(cfgs[key], metrics[i])
+		cfgs[key] = append(cfgs[key], &metrics[i])
 	}
 	return Parser{
 		separator:     separator,
@@ -55,25 +144,26 @@ func NewParser(metrics []config.MetricConfig, separator, stateDir string) Parser
 }
 
 // Config returns the underlying metrics config
-func (p *Parser) config() map[string][]config.MetricConfig {
+func (p *Parser) config() map[string][]*config.MetricConfig {
 	return p.metricConfigs
 }
 
-// validMetric returns config matching the metric and deviceID
-// Second return value indicates if config was found.
-func (p *Parser) findMetricConfig(metric string, deviceID string) (config.MetricConfig, bool) {
+// validMetric returns all configs matching the metric and deviceID.
+func (p *Parser) findMetricConfigs(metric string, deviceID string) []*config.MetricConfig {
+	configs := []*config.MetricConfig{}
 	for _, c := range p.metricConfigs[metric] {
 		if c.SensorNameFilter.Match(deviceID) {
-			return c, true
+			configs = append(configs, c)
 		}
 	}
-	return config.MetricConfig{}, false
+	return configs
 }
 
 // parseMetric parses the given value according to the given deviceID and metricPath. The config allows to
 // parse a metric value according to the device ID.
-func (p *Parser) parseMetric(cfg config.MetricConfig, metricID string, value interface{}) (Metric, error) {
+func (p *Parser) parseMetric(cfg *config.MetricConfig, metricID string, value interface{}) (Metric, error) {
 	var metricValue float64
+	var err error
 
 	if boolValue, ok := value.(bool); ok {
 		if boolValue {
@@ -100,7 +190,7 @@ func (p *Parser) parseMetric(cfg config.MetricConfig, metricID string, value int
 			// otherwise try to parse float
 			floatValue, err := strconv.ParseFloat(strValue, 64)
 			if err != nil {
-				return Metric{}, fmt.Errorf("got data with unexpectd type: %T ('%s') and failed to parse to float", value, value)
+				return Metric{}, fmt.Errorf("got data with unexpectd type: %T ('%v') and failed to parse to float", value, value)
 			}
 			metricValue = floatValue
 
@@ -109,23 +199,19 @@ func (p *Parser) parseMetric(cfg config.MetricConfig, metricID string, value int
 	} else if floatValue, ok := value.(float64); ok {
 		metricValue = floatValue
 	} else {
-		return Metric{}, fmt.Errorf("got data with unexpectd type: %T ('%s')", value, value)
+		return Metric{}, fmt.Errorf("got data with unexpectd type: %T ('%v')", value, value)
+	}
+
+	if cfg.Expression != "" {
+		if metricValue, err = p.evalExpression(metricID, cfg.Expression, metricValue); err != nil {
+			return Metric{}, err
+		}
 	}
 
 	if cfg.ForceMonotonicy {
-		ms, err := p.getMetricState(metricID)
-		if err != nil {
+		if metricValue, err = p.enforceMonotonicy(metricID, metricValue); err != nil {
 			return Metric{}, err
 		}
-		// When the source metric is reset, the last adjusted value becomes the new offset.
-		if metricValue < ms.monotonic.LastRawValue {
-			ms.monotonic.Offset += ms.monotonic.LastRawValue
-			// Trigger flushing the new state to disk.
-			ms.lastWritten = time.Time{}
-		}
-
-		ms.monotonic.LastRawValue = metricValue
-		metricValue += ms.monotonic.Offset
 	}
 
 	if cfg.MQTTValueScale != 0 {
@@ -159,7 +245,7 @@ func (p *Parser) readMetricState(metricID string) (*metricState, error) {
 		if os.IsNotExist(err) {
 			return state, nil
 		}
-		return state, err
+		return state, fmt.Errorf("failed to read file %q: %v", f.Name(), err)
 	}
 	defer f.Close()
 
@@ -171,14 +257,14 @@ func (p *Parser) readMetricState(metricID string) (*metricState, error) {
 		return state, err
 	}
 
-	err = yaml.UnmarshalStrict(data, &state.monotonic)
+	err = yaml.UnmarshalStrict(data, &state.dynamic)
 	state.lastWritten = now()
 	return state, err
 }
 
 // writeMetricState writes back the metric's current state to the configured path.
 func (p *Parser) writeMetricState(metricID string, state *metricState) error {
-	out, err := yaml.Marshal(state.monotonic)
+	out, err := yaml.Marshal(state.dynamic)
 	if err != nil {
 		return err
 	}
@@ -186,9 +272,11 @@ func (p *Parser) writeMetricState(metricID string, state *metricState) error {
 	if err != nil {
 		return err
 	}
-	_, err = f.Write(out)
-	f.Close()
-	return err
+	defer f.Close()
+	if _, err = f.Write(out); err != nil {
+		return fmt.Errorf("failed to write file %q: %v", f.Name(), err)
+	}
+	return nil
 }
 
 // getMetricState returns the state of the given metric.
@@ -209,4 +297,64 @@ func (p *Parser) getMetricState(metricID string) (*metricState, error) {
 		}
 	}
 	return state, err
+}
+
+// enforceMonotonicy makes sure the given values never decrease from one call to the next.
+// If the current value is smaller than the last one, a consistent offset is added.
+func (p *Parser) enforceMonotonicy(metricID string, value float64) (float64, error) {
+	ms, err := p.getMetricState(metricID)
+	if err != nil {
+		return value, err
+	}
+	// When the source metric is reset, the last adjusted value becomes the new offset.
+	if value < ms.dynamic.LastRawValue {
+		ms.dynamic.Offset += ms.dynamic.LastRawValue
+		// Trigger flushing the new state to disk.
+		ms.lastWritten = time.Time{}
+	}
+
+	ms.dynamic.LastRawValue = value
+	return value + ms.dynamic.Offset, nil
+}
+
+// evalExpression runs the given code in the metric's environment and returns the result.
+// In case of an error, the original value is returned.
+func (p *Parser) evalExpression(metricID, code string, value float64) (float64, error) {
+	ms, err := p.getMetricState(metricID)
+	if err != nil {
+		return value, err
+	}
+	if ms.program == nil {
+		ms.env = defaultExprEnv()
+		ms.program, err = expr.Compile(code, expr.Env(ms.env), expr.AsFloat64())
+		if err != nil {
+			return value, fmt.Errorf("failed to compile expression %q: %w", code, err)
+		}
+		// Trigger flushing the new state to disk.
+		ms.lastWritten = time.Time{}
+	}
+
+	// Update the environment
+	ms.env[env_value] = value
+	ms.env[env_last_value] = ms.dynamic.LastExprValue
+	ms.env[env_last_result] = ms.dynamic.LastExprResult
+	if ms.dynamic.LastExprTimestamp.IsZero() {
+		ms.env[env_elapsed] = time.Duration(0)
+	} else {
+		ms.env[env_elapsed] = now().Sub(ms.dynamic.LastExprTimestamp)
+	}
+
+	result, err := expr.Run(ms.program, ms.env)
+	if err != nil {
+		return value, fmt.Errorf("failed to evaluate expression %q: %w", code, err)
+	}
+	// Type was statically checked above.
+	ret := result.(float64)
+
+	// Update the dynamic state
+	ms.dynamic.LastExprResult = ret
+	ms.dynamic.LastExprValue = value
+	ms.dynamic.LastExprTimestamp = now()
+
+	return ret, nil
 }

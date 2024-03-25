@@ -32,19 +32,16 @@ func NewJSONObjectExtractor(p Parser) Extractor {
 				continue
 			}
 
-			// Find a valid metrics config
-			config, found := p.findMetricConfig(path, deviceID)
-			if !found {
-				continue
+			// Find all valid metric configs
+			for _, config := range p.findMetricConfigs(path, deviceID) {
+				id := metricID(topic, path, deviceID, config.PrometheusName)
+				m, err := p.parseMetric(config, id, rawValue)
+				if err != nil {
+					return nil, fmt.Errorf("failed to parse valid value from '%v' for metric %q: %w", rawValue, config.PrometheusName, err)
+				}
+				m.Topic = topic
+				mc = append(mc, m)
 			}
-
-			id := metricID(topic, path, deviceID, config.PrometheusName)
-			m, err := p.parseMetric(config, id, rawValue)
-			if err != nil {
-				return nil, fmt.Errorf("failed to parse valid metric value: %w", err)
-			}
-			m.Topic = topic
-			mc = append(mc, m)
 		}
 		return mc, nil
 	}
@@ -52,35 +49,34 @@ func NewJSONObjectExtractor(p Parser) Extractor {
 
 func NewMetricPerTopicExtractor(p Parser, metricNameRegex *config.Regexp) Extractor {
 	return func(topic string, payload []byte, deviceID string) (MetricCollection, error) {
+		var mc MetricCollection
 		metricName := metricNameRegex.GroupValue(topic, config.MetricNameRegexGroup)
 		if metricName == "" {
 			return nil, fmt.Errorf("failed to find valid metric in topic path")
 		}
 
-		// Find a valid metrics config
-		config, found := p.findMetricConfig(metricName, deviceID)
-		if !found {
-			return nil, nil
-		}
-
-		var rawValue interface{}
-		if config.PayloadField != "" {
-			parsed := gojsonq.New(gojsonq.SetSeparator(p.separator)).FromString(string(payload))
-			rawValue = parsed.Find(config.PayloadField)
-			parsed.Reset()
-			if rawValue == nil {
-				return nil, fmt.Errorf("failed to extract field %s from payload %s", config.PayloadField, payload)
+		// Find all valid metric configs
+		for _, config := range p.findMetricConfigs(metricName, deviceID) {
+			var rawValue interface{}
+			if config.PayloadField != "" {
+				parsed := gojsonq.New(gojsonq.SetSeparator(p.separator)).FromString(string(payload))
+				rawValue = parsed.Find(config.PayloadField)
+				parsed.Reset()
+				if rawValue == nil {
+					return nil, fmt.Errorf("failed to extract field %q from payload %q for metric %q", config.PayloadField, payload, metricName)
+				}
+			} else {
+				rawValue = string(payload)
 			}
-		} else {
-			rawValue = string(payload)
-		}
 
-		id := metricID(topic, metricName, deviceID, config.PrometheusName)
-		m, err := p.parseMetric(config, id, rawValue)
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse metric: %w", err)
+			id := metricID(topic, metricName, deviceID, config.PrometheusName)
+			m, err := p.parseMetric(config, id, rawValue)
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse valid value from '%v' for metric %q: %w", rawValue, config.PrometheusName, err)
+			}
+			m.Topic = topic
+			mc = append(mc, m)
 		}
-		m.Topic = topic
-		return MetricCollection{m}, nil
+		return mc, nil
 	}
 }

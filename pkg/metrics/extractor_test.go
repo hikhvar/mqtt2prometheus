@@ -11,7 +11,7 @@ import (
 func TestNewJSONObjectExtractor_parseMetric(t *testing.T) {
 	now = testNow
 	type fields struct {
-		metricConfigs map[string][]config.MetricConfig
+		metricConfigs map[string][]*config.MetricConfig
 	}
 	type args struct {
 		metricPath string
@@ -31,8 +31,8 @@ func TestNewJSONObjectExtractor_parseMetric(t *testing.T) {
 			name:      "string value",
 			separator: "->",
 			fields: fields{
-				map[string][]config.MetricConfig{
-					"SDS0X1->PM2->5": []config.MetricConfig{
+				map[string][]*config.MetricConfig{
+					"SDS0X1->PM2->5": {
 						{
 							PrometheusName: "temperature",
 							MQTTName:       "SDS0X1.PM2.5",
@@ -57,8 +57,8 @@ func TestNewJSONObjectExtractor_parseMetric(t *testing.T) {
 			name:      "string value with dots in path",
 			separator: "->",
 			fields: fields{
-				map[string][]config.MetricConfig{
-					"SDS0X1->PM2.5": []config.MetricConfig{
+				map[string][]*config.MetricConfig{
+					"SDS0X1->PM2.5": {
 						{
 							PrometheusName: "temperature",
 							MQTTName:       "SDS0X1->PM2.5",
@@ -83,8 +83,8 @@ func TestNewJSONObjectExtractor_parseMetric(t *testing.T) {
 			name:      "metric matching SensorNameFilter",
 			separator: ".",
 			fields: fields{
-				map[string][]config.MetricConfig{
-					"temperature": []config.MetricConfig{
+				map[string][]*config.MetricConfig{
+					"temperature": {
 						{
 							PrometheusName:   "temperature",
 							MQTTName:         "temperature",
@@ -110,8 +110,8 @@ func TestNewJSONObjectExtractor_parseMetric(t *testing.T) {
 			name:      "metric not matching SensorNameFilter",
 			separator: ".",
 			fields: fields{
-				map[string][]config.MetricConfig{
-					"temperature": []config.MetricConfig{
+				map[string][]*config.MetricConfig{
+					"temperature": {
 						{
 							PrometheusName:   "temperature",
 							MQTTName:         "temperature",

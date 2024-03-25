@@ -1,0 +1,38 @@
+# Sample MQTT messages from Shelly H&T processed by this configuration file:
+# $ mosquitto_sub -h 127.0.0.1 -t 'shellies/+/sensor/+' -v -u bob -P happylittleclouds
+#
+# shellies/shellyht-CC2D76/sensor/temperature 24.75
+# shellies/shellyht-CC2D76/sensor/humidity 43.5
+# shellies/shellyht-CC2D76/sensor/battery 100
+# shellies/shellyht-CC2D76/sensor/ext_power false
+# shellies/shellyht-CC2D76/sensor/error 0
+# shellies/shellyht-CC2D76/sensor/act_reasons ["sensor"]
+
+mqtt:
+  server: tcp://127.0.0.1:1883
+  user: bob
+  password: happylittleclouds
+  topic_path: shellies/+/sensor/+
+  device_id_regex: "shellies/(?P<deviceid>.*)/sensor/.*"
+  metric_per_topic_config:
+    metric_name_regex: "shellies/(?P<deviceid>.*)/sensor/(?P<metricname>.*)"
+  qos: 0
+cache:
+  timeout: 24h
+metrics:
+  - prom_name: temperature
+    mqtt_name: temperature
+    type: gauge
+    const_labels:
+      sensor_type: shelly
+  - prom_name: humidity
+    mqtt_name: humidity
+    type: gauge
+    const_labels:
+      sensor_type: shelly
+  - prom_name: battery
+    mqtt_name: battery
+    type: gauge
+    const_labels:
+      sensor_type: shelly
+

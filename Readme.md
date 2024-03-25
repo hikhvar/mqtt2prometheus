@@ -46,7 +46,7 @@ For example the `topic_path: devices/+/sensors/#` will match:
 * `devices/home/sensors/foo/bar`
 * `devices/workshop/sensors/temperature`
 
-### JSON Seperator
+### JSON Separator
 The exporter interprets `mqtt_name` as [gojsonq](https://github.com/thedevsaddam/gojsonq) paths. Those paths will be used
 to find the value in the JSON message.
 For example `mqtt_name: computed.heat_index`

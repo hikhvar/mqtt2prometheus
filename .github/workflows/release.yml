@@ -33,10 +33,6 @@ jobs:
         # Github Registry does not support the github actions token
       - name: Login to Github Registry
         run: echo ${{secrets.PERSONAL_ACCESS_TOKEN }} | docker login ghcr.io -u hikhvar --password-stdin
-      - name: Enable docker experimental features for docker manifests
-        run: |
-          echo '{"experimental": true}' | sudo tee -a  /etc/docker/daemon.json
-          sudo systemctl restart docker
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v3
         with:

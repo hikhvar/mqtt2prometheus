@@ -1,6 +1,7 @@
 package metrics
 
 import (
+	"os"
 	"reflect"
 	"testing"
 	"time"
@@ -10,6 +11,12 @@ import (
 )
 
 func TestParser_parseMetric(t *testing.T) {
+	stateDir, err := os.MkdirTemp("", "parser_test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(stateDir)
+
 	now = testNow
 	type fields struct {
 		metricConfigs map[string][]config.MetricConfig
@@ -415,12 +422,111 @@ func TestParser_parseMetric(t *testing.T) {
 			},
 			wantErr: true,
 		},
+		{
+			name: "monotonic gauge, step 1: initial value",
+			fields: fields{
+				map[string][]config.MetricConfig{
+					"aenergy.total": []config.MetricConfig{
+						{
+							PrometheusName:  "total_energy",
+							ValueType:       "gauge",
+							OmitTimestamp:   true,
+							ForceMonotonicy: true,
+						},
+					},
+				},
+			},
+			args: args{
+				metricPath: "aenergy.total",
+				deviceID:   "shellyplus1pm-foo",
+				value:      1.0,
+			},
+			want: Metric{
+				Description: prometheus.NewDesc("total_energy", "", []string{"sensor", "topic"}, nil),
+				ValueType:   prometheus.GaugeValue,
+				Value:       1.0,
+			},
+		},
+		{
+			name: "monotonic gauge, step 2: monotonic increase does not add offset",
+			fields: fields{
+				map[string][]config.MetricConfig{
+					"aenergy.total": []config.MetricConfig{
+						{
+							PrometheusName:  "total_energy",
+							ValueType:       "gauge",
+							OmitTimestamp:   true,
+							ForceMonotonicy: true,
+						},
+					},
+				},
+			},
+			args: args{
+				metricPath: "aenergy.total",
+				deviceID:   "shellyplus1pm-foo",
+				value:      2.0,
+			},
+			want: Metric{
+				Description: prometheus.NewDesc("total_energy", "", []string{"sensor", "topic"}, nil),
+				ValueType:   prometheus.GaugeValue,
+				Value:       2.0,
+			},
+		},
+		{
+			name: "monotonic gauge, step 3: raw metric is reset, last value becomes the new offset",
+			fields: fields{
+				map[string][]config.MetricConfig{
+					"aenergy.total": []config.MetricConfig{
+						{
+							PrometheusName:  "total_energy",
+							ValueType:       "gauge",
+							OmitTimestamp:   true,
+							ForceMonotonicy: true,
+						},
+					},
+				},
+			},
+			args: args{
+				metricPath: "aenergy.total",
+				deviceID:   "shellyplus1pm-foo",
+				value:      0.0,
+			},
+			want: Metric{
+				Description: prometheus.NewDesc("total_energy", "", []string{"sensor", "topic"}, nil),
+				ValueType:   prometheus.GaugeValue,
+				Value:       2.0,
+			},
+		},
+		{
+			name: "monotonic gauge, step 4: monotonic increase with offset",
+			fields: fields{
+				map[string][]config.MetricConfig{
+					"aenergy.total": []config.MetricConfig{
+						{
+							PrometheusName:  "total_energy",
+							ValueType:       "gauge",
+							OmitTimestamp:   true,
+							ForceMonotonicy: true,
+						},
+					},
+				},
+			},
+			args: args{
+				metricPath: "aenergy.total",
+				deviceID:   "shellyplus1pm-foo",
+				value:      1.0,
+			},
+			want: Metric{
+				Description: prometheus.NewDesc("total_energy", "", []string{"sensor", "topic"}, nil),
+				ValueType:   prometheus.GaugeValue,
+				Value:       3.0,
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			p := &Parser{
-				metricConfigs: tt.fields.metricConfigs,
-			}
+			p := NewParser(nil, config.JsonParsingConfigDefaults.Separator, stateDir)
+			p.metricConfigs = tt.fields.metricConfigs
 
 			// Find a valid metrics config
 			config, found := p.findMetricConfig(tt.args.metricPath, tt.args.deviceID)
@@ -431,13 +537,20 @@ func TestParser_parseMetric(t *testing.T) {
 				return
 			}
 
-			got, err := p.parseMetric(config, tt.args.value)
+			id := metricID("", tt.args.metricPath, tt.args.deviceID, config.PrometheusName)
+			got, err := p.parseMetric(config, id, tt.args.value)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("parseMetric() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("parseMetric() got = %v, want %v", got, tt.want)
+			}
+
+			if config.ForceMonotonicy {
+				if err = p.writeMetricState(id, p.states[id]); err != nil {
+					t.Errorf("failed to write metric state: %v", err)
+				}
 			}
 		})
 	}

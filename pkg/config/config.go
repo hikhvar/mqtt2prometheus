@@ -129,7 +129,7 @@ type MetricPerTopicConfig struct {
 	MetricNameRegex *Regexp `yaml:"metric_name_regex"` // Default
 }
 
-// Metrics Config is a mapping between a metric send on mqtt to a prometheus metric
+// Metrics Config is a mapping between a metric sent on mqtt and a prometheus metric
 type MetricConfig struct {
 	PrometheusName     string                    `yaml:"prom_name"`
 	MQTTName           string                    `yaml:"mqtt_name"`
@@ -142,6 +142,7 @@ type MetricConfig struct {
 	ConstantLabels     map[string]string         `yaml:"const_labels"`
 	StringValueMapping *StringValueMappingConfig `yaml:"string_value_mapping"`
 	MQTTValueScale     float64                   `yaml:"mqtt_value_scale"`
+	DeviceIDRegex      *Regexp                   `yaml:"device_id_regex"`
 }
 
 // StringValueMappingConfig defines the mapping from string to float
@@ -192,18 +193,23 @@ func LoadConfig(configFile string) (Config, error) {
 	if cfg.MQTT.DeviceIDRegex == nil {
 		cfg.MQTT.DeviceIDRegex = MQTTConfigDefaults.DeviceIDRegex
 	}
-	var validRegex bool
-	for _, name := range cfg.MQTT.DeviceIDRegex.RegEx().SubexpNames() {
-		if name == DeviceIDRegexGroup {
-			validRegex = true
-		}
-	}
-	if !validRegex {
+	if !validDeviceIDRegexp(cfg.MQTT.DeviceIDRegex, DeviceIDRegexGroup) {
 		return Config{}, fmt.Errorf("device id regex %q does not contain required regex group %q", cfg.MQTT.DeviceIDRegex.pattern, DeviceIDRegexGroup)
 	}
 
 	if cfg.MQTT.ObjectPerTopicConfig != nil && cfg.MQTT.MetricPerTopicConfig != nil {
 		return Config{}, fmt.Errorf("only one of object_per_topic_config and metric_per_topic_config can be specified")
+	}
+
+	// Check DeviceIDRegex on each MetricConfig and populate with the default if it's not set
+	for idx, config := range cfg.Metrics {
+		if config.DeviceIDRegex != nil {
+			if !validDeviceIDRegexp(config.DeviceIDRegex, DeviceIDRegexGroup) {
+				return Config{}, fmt.Errorf("device id regex %q does not contain required regex group %q", config.DeviceIDRegex.pattern, DeviceIDRegexGroup)
+			}
+		} else {
+			cfg.Metrics[idx].DeviceIDRegex = cfg.MQTT.DeviceIDRegex
+		}
 	}
 
 	if cfg.MQTT.ObjectPerTopicConfig == nil && cfg.MQTT.MetricPerTopicConfig == nil {
@@ -213,13 +219,7 @@ func LoadConfig(configFile string) (Config, error) {
 	}
 
 	if cfg.MQTT.MetricPerTopicConfig != nil {
-		validRegex = false
-		for _, name := range cfg.MQTT.MetricPerTopicConfig.MetricNameRegex.RegEx().SubexpNames() {
-			if name == MetricNameRegexGroup {
-				validRegex = true
-			}
-		}
-		if !validRegex {
+		if !validDeviceIDRegexp(cfg.MQTT.MetricPerTopicConfig.MetricNameRegex, MetricNameRegexGroup) {
 			return Config{}, fmt.Errorf("metric name regex %q does not contain required regex group %q", cfg.MQTT.DeviceIDRegex.pattern, MetricNameRegexGroup)
 		}
 	}
@@ -238,4 +238,13 @@ func LoadConfig(configFile string) (Config, error) {
 	}
 
 	return cfg, nil
+}
+
+func validDeviceIDRegexp(regexp *Regexp, requiredGroup string) bool {
+	for _, name := range regexp.RegEx().SubexpNames() {
+		if name == requiredGroup {
+			return true
+		}
+	}
+	return false
 }

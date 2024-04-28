@@ -2,9 +2,10 @@ package metrics
 
 import (
 	"fmt"
+
 	"go.uber.org/zap"
 
-	"github.com/eclipse/paho.mqtt.golang"
+	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/hikhvar/mqtt2prometheus/pkg/config"
 )
 
@@ -28,12 +29,11 @@ func NewIngest(collector Collector, extractor Extractor, deviceIDRegex *config.R
 }
 
 func (i *Ingest) store(topic string, payload []byte) error {
-	deviceID := i.deviceID(topic)
-	mc, err := i.extractor(topic, payload, deviceID)
+	mc, err := i.extractor(topic, payload)
 	if err != nil {
 		return fmt.Errorf("failed to extract metric values from topic: %w", err)
 	}
-	i.collector.Observe(deviceID, mc)
+	i.collector.Observe(mc)
 	return nil
 }
 
@@ -48,9 +48,4 @@ func (i *Ingest) SetupSubscriptionHandler(errChan chan<- error) mqtt.MessageHand
 		}
 		i.CountSuccess(m.Topic())
 	}
-}
-
-// deviceID uses the configured DeviceIDRegex to extract the device ID from the given mqtt topic path.
-func (i *Ingest) deviceID(topic string) string {
-	return i.deviceIDRegex.GroupValue(topic, config.DeviceIDRegexGroup)
 }

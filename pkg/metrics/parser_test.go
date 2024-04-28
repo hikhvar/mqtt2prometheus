@@ -23,7 +23,7 @@ func TestParser_parseMetric(t *testing.T) {
 	}
 	type args struct {
 		metricPath string
-		deviceID   string
+		topic      string
 		value      interface{}
 	}
 	tests := []struct {
@@ -42,13 +42,14 @@ func TestParser_parseMetric(t *testing.T) {
 							PrometheusName: "temperature",
 							ValueType:      "gauge",
 							OmitTimestamp:  true,
+							DeviceIDRegex:  config.MQTTConfigDefaults.DeviceIDRegex,
 						},
 					},
 				},
 			},
 			args: args{
 				metricPath: "temperature",
-				deviceID:   "dht22",
+				topic:      "devices/home/dht22",
 				value:      12.6,
 			},
 			want: Metric{
@@ -67,13 +68,14 @@ func TestParser_parseMetric(t *testing.T) {
 						{
 							PrometheusName: "temperature",
 							ValueType:      "gauge",
+							DeviceIDRegex:  config.MQTTConfigDefaults.DeviceIDRegex,
 						},
 					},
 				},
 			},
 			args: args{
 				metricPath: "temperature",
-				deviceID:   "dht22",
+				topic:      "devices/home/dht22",
 				value:      "12.6",
 			},
 			want: Metric{
@@ -93,13 +95,14 @@ func TestParser_parseMetric(t *testing.T) {
 							PrometheusName: "temperature",
 							ValueType:      "gauge",
 							MQTTValueScale: 0.01,
+							DeviceIDRegex:  config.MQTTConfigDefaults.DeviceIDRegex,
 						},
 					},
 				},
 			},
 			args: args{
 				metricPath: "temperature",
-				deviceID:   "dht22",
+				topic:      "devices/home/dht22",
 				value:      "12.6",
 			},
 			want: Metric{
@@ -118,13 +121,14 @@ func TestParser_parseMetric(t *testing.T) {
 						{
 							PrometheusName: "temperature",
 							ValueType:      "gauge",
+							DeviceIDRegex:  config.MQTTConfigDefaults.DeviceIDRegex,
 						},
 					},
 				},
 			},
 			args: args{
 				metricPath: "temperature",
-				deviceID:   "dht22",
+				topic:      "devices/home/dht22",
 				value:      "12.6.5",
 			},
 			wantErr: true,
@@ -137,13 +141,14 @@ func TestParser_parseMetric(t *testing.T) {
 						{
 							PrometheusName: "temperature",
 							ValueType:      "gauge",
+							DeviceIDRegex:  config.MQTTConfigDefaults.DeviceIDRegex,
 						},
 					},
 				},
 			},
 			args: args{
 				metricPath: "temperature",
-				deviceID:   "dht22",
+				topic:      "devices/home/dht22",
 				value:      12.6,
 			},
 			want: Metric{
@@ -163,13 +168,14 @@ func TestParser_parseMetric(t *testing.T) {
 							PrometheusName: "humidity",
 							ValueType:      "gauge",
 							MQTTValueScale: 0.01,
+							DeviceIDRegex:  config.MQTTConfigDefaults.DeviceIDRegex,
 						},
 					},
 				},
 			},
 			args: args{
 				metricPath: "humidity",
-				deviceID:   "dht22",
+				topic:      "devices/home/dht22",
 				value:      12.6,
 			},
 			want: Metric{
@@ -189,13 +195,14 @@ func TestParser_parseMetric(t *testing.T) {
 							PrometheusName: "humidity",
 							ValueType:      "gauge",
 							MQTTValueScale: -2,
+							DeviceIDRegex:  config.MQTTConfigDefaults.DeviceIDRegex,
 						},
 					},
 				},
 			},
 			args: args{
 				metricPath: "humidity",
-				deviceID:   "dht22",
+				topic:      "devices/home/dht22",
 				value:      12.6,
 			},
 			want: Metric{
@@ -214,13 +221,14 @@ func TestParser_parseMetric(t *testing.T) {
 						{
 							PrometheusName: "enabled",
 							ValueType:      "gauge",
+							DeviceIDRegex:  config.MQTTConfigDefaults.DeviceIDRegex,
 						},
 					},
 				},
 			},
 			args: args{
 				metricPath: "enabled",
-				deviceID:   "dht22",
+				topic:      "devices/home/dht22",
 				value:      true,
 			},
 			want: Metric{
@@ -240,13 +248,14 @@ func TestParser_parseMetric(t *testing.T) {
 							PrometheusName: "enabled",
 							ValueType:      "gauge",
 							MQTTValueScale: 0.5,
+							DeviceIDRegex:  config.MQTTConfigDefaults.DeviceIDRegex,
 						},
 					},
 				},
 			},
 			args: args{
 				metricPath: "enabled",
-				deviceID:   "dht22",
+				topic:      "devices/home/dht22",
 				value:      true,
 			},
 			want: Metric{
@@ -265,13 +274,14 @@ func TestParser_parseMetric(t *testing.T) {
 						{
 							PrometheusName: "enabled",
 							ValueType:      "gauge",
+							DeviceIDRegex:  config.MQTTConfigDefaults.DeviceIDRegex,
 						},
 					},
 				},
 			},
 			args: args{
 				metricPath: "enabled",
-				deviceID:   "dht22",
+				topic:      "devices/home/dht22",
 				value:      false,
 			},
 			want: Metric{
@@ -296,13 +306,14 @@ func TestParser_parseMetric(t *testing.T) {
 									"bar": 2,
 								},
 							},
+							DeviceIDRegex: config.MQTTConfigDefaults.DeviceIDRegex,
 						},
 					},
 				},
 			},
 			args: args{
 				metricPath: "enabled",
-				deviceID:   "dht22",
+				topic:      "devices/home/dht22",
 				value:      "foo",
 			},
 			want: Metric{
@@ -328,13 +339,14 @@ func TestParser_parseMetric(t *testing.T) {
 									"bar": 2,
 								},
 							},
+							DeviceIDRegex: config.MQTTConfigDefaults.DeviceIDRegex,
 						},
 					},
 				},
 			},
 			args: args{
 				metricPath: "enabled",
-				deviceID:   "dht22",
+				topic:      "devices/home/dht22",
 				value:      "asd",
 			},
 			want: Metric{
@@ -359,13 +371,14 @@ func TestParser_parseMetric(t *testing.T) {
 									"bar": 2,
 								},
 							},
+							DeviceIDRegex: config.MQTTConfigDefaults.DeviceIDRegex,
 						},
 					},
 				},
 			},
 			args: args{
 				metricPath: "enabled",
-				deviceID:   "dht22",
+				topic:      "devices/home/dht22",
 				value:      "asd",
 			},
 			wantErr: true,
@@ -385,13 +398,14 @@ func TestParser_parseMetric(t *testing.T) {
 									"bar": 2,
 								},
 							},
+							DeviceIDRegex: config.MQTTConfigDefaults.DeviceIDRegex,
 						},
 					},
 				},
 			},
 			args: args{
 				metricPath: "enabled1",
-				deviceID:   "dht22",
+				topic:      "devices/home/dht22",
 				value:      "asd",
 			},
 			wantErr: true,
@@ -411,13 +425,14 @@ func TestParser_parseMetric(t *testing.T) {
 									"bar": 2,
 								},
 							},
+							DeviceIDRegex: config.MQTTConfigDefaults.DeviceIDRegex,
 						},
 					},
 				},
 			},
 			args: args{
 				metricPath: "enabled",
-				deviceID:   "dht22",
+				topic:      "devices/home/dht22",
 				value:      []int{3},
 			},
 			wantErr: true,
@@ -529,7 +544,7 @@ func TestParser_parseMetric(t *testing.T) {
 			p.metricConfigs = tt.fields.metricConfigs
 
 			// Find a valid metrics config
-			config, found := p.findMetricConfig(tt.args.metricPath, tt.args.deviceID)
+			config, _, found := p.findMetricConfig(tt.args.metricPath, tt.args.topic)
 			if !found {
 				if !tt.wantErr {
 					t.Errorf("MetricConfig not found")

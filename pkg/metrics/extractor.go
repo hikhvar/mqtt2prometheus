@@ -8,7 +8,7 @@ import (
 	gojsonq "github.com/thedevsaddam/gojsonq/v2"
 )
 
-type Extractor func(topic string, payload []byte, deviceID string) (MetricCollection, error)
+type Extractor func(topic string, payload []byte) (MetricCollection, error)
 
 // metricID returns a deterministic identifier per metic config which is safe to use in a file path.
 func metricID(topic, metric, deviceID, promName string) string {
@@ -21,7 +21,7 @@ func metricID(topic, metric, deviceID, promName string) string {
 }
 
 func NewJSONObjectExtractor(p Parser) Extractor {
-	return func(topic string, payload []byte, deviceID string) (MetricCollection, error) {
+	return func(topic string, payload []byte) (MetricCollection, error) {
 		var mc MetricCollection
 		parsed := gojsonq.New(gojsonq.SetSeparator(p.separator)).FromString(string(payload))
 
@@ -33,7 +33,7 @@ func NewJSONObjectExtractor(p Parser) Extractor {
 			}
 
 			// Find a valid metrics config
-			config, found := p.findMetricConfig(path, deviceID)
+			config, deviceId, found := p.findMetricConfig(path, topic)
 			if !found {
 				continue
 			}
@@ -44,6 +44,7 @@ func NewJSONObjectExtractor(p Parser) Extractor {
 				return nil, fmt.Errorf("failed to parse valid metric value: %w", err)
 			}
 			m.Topic = topic
+			m.DeviceID = deviceId
 			mc = append(mc, m)
 		}
 		return mc, nil
@@ -51,14 +52,14 @@ func NewJSONObjectExtractor(p Parser) Extractor {
 }
 
 func NewMetricPerTopicExtractor(p Parser, metricNameRegex *config.Regexp) Extractor {
-	return func(topic string, payload []byte, deviceID string) (MetricCollection, error) {
+	return func(topic string, payload []byte) (MetricCollection, error) {
 		metricName := metricNameRegex.GroupValue(topic, config.MetricNameRegexGroup)
 		if metricName == "" {
 			return nil, fmt.Errorf("failed to find valid metric in topic path")
 		}
 
 		// Find a valid metrics config
-		config, found := p.findMetricConfig(metricName, deviceID)
+		config, deviceId, found := p.findMetricConfig(metricName, topic)
 		if !found {
 			return nil, nil
 		}
@@ -81,6 +82,7 @@ func NewMetricPerTopicExtractor(p Parser, metricNameRegex *config.Regexp) Extrac
 			return nil, fmt.Errorf("failed to parse metric: %w", err)
 		}
 		m.Topic = topic
+		m.DeviceID = deviceId
 		return MetricCollection{m}, nil
 	}
 }

@@ -251,6 +251,32 @@ metrics:
     # If not specified, parsing error will occur.
     error_value: 1
   # The name of the metric in prometheus
+ - prom_name: total_light_usage_seconds
+  # The name of the metric in a MQTT JSON message
+   mqtt_name: state
+  # Regular expression to only match sensors with the given name pattern
+   sensor_name_filter: "^.*-light$"
+  # The prometheus help text for this metric
+   help: Total time the light was on, in seconds
+  # The prometheus type for this metric. Valid values are: "gauge" and "counter"
+   type: counter
+  # according to prometheus exposition format timestamp is not mandatory, we can omit it if the reporting from the sensor is sporadic
+   omit_timestamp: true
+  # A map of string to string for constant labels. This labels will be attached to every prometheus metric
+   const_labels:
+    sensor_type: ikea
+  # When specified, enables mapping between string values to metric values.
+   string_value_mapping:
+    # A map of string to metric value.
+    map:
+     off: 0
+     low: 0
+    # Metric value to use if a match cannot be found in the map above.
+    # If not specified, parsing error will occur.
+    error_value: 1
+  # Sum up the time the light is on, see the section "Expressions" below.
+  expression: "value > 0 ? last_result + elapsed.Seconds() : last_result"
+  # The name of the metric in prometheus
  - prom_name: total_energy
   # The name of the metric in a MQTT JSON message
    mqtt_name: aenergy.total
@@ -260,9 +286,8 @@ metrics:
    help: Total energy used
   # The prometheus type for this metric. Valid values are: "gauge" and "counter"
    type: counter
-  # This setting requires an almost monotonic counter as the source. When monotonicy is enforced, the metric value is regularly written to disk. Thus, resets in the source counter can be detected and corrected by adding an offset as if the reset did not happen. The result is a strict monotonic increasing time series, like an ever growing counter.
+  # This setting requires an almost monotonic counter as the source. When monotonicy is enforced, the metric value is regularly written to disk. Thus, resets in the source counter can be detected and corrected by adding an offset as if the reset did not happen. The result is a true monotonic increasing time series, like an ever growing counter.
    force_monotonicy: true
-  
 ```
 
 ### Environment Variables
@@ -308,7 +333,43 @@ Create a docker secret to store the password(`mqtt-credential` in the example be
         - config-tasmota.yml:/config.yaml:ro
 ```
 
+### Expressions
 
+Metric values can be derived from sensor inputs using complex expressions. Set the metric config option `expression` to the desired formular to calculate the result from the input. Here's an example which integrates all positive values over time:
+
+```yaml
+expression: "value > 0 ? last_result + value * elapsed.Seconds() : last_result"
+```
+
+During the evaluation, the following variables are available to the expression:
+* `value` - the current sensor value (after string-value mapping, if configured)
+* `last_value` - the `value` during the previous expression evaluation
+* `last_result` - the result from the previous expression evaluation
+* `elapsed` - the time that passed since the previous evaluation, as a [Duration](https://pkg.go.dev/time#Duration) value
+
+The [language definition](https://expr-lang.org/docs/v1.9/Language-Definition) describes the expression syntax. In addition, the following functions are available:
+* `now()` - the current time as a [Time](https://pkg.go.dev/time#Time) value
+* `int(x)` - convert `x` to an integer value
+* `float(x)` - convert `x` to a floating point value
+* `round(x)` - rounds value `x` to the nearest integer
+* `ceil(x)` - rounds value `x` up to the next higher integer
+* `floor(x)` - rounds value `x` down to the next lower integer
+* `abs(x)` - returns the `x` as a positive number
+* `min(x, y)` - returns the minimum of `x` and `y`
+* `max(x, y)` - returns the maximum of `x` and `y`
+
+[Time](https://pkg.go.dev/time#Time) and [Duration](https://pkg.go.dev/time#Duration) values come with their own methods which can be used in expressions. For example, `elapsed.Milliseconds()` yields the number of milliseconds that passed since the last evaluation, while `now().Sub(elapsed).Weekday()` returns the day of the week during the previous evaluation.
+
+The `last_value`, `last_result`, and the timestamp of the last evaluation are regularly stored on disk. When mqtt2prometheus is restarted, the data is read back for the next evaluation. This means that you can calculate stable, long-running time serious which depend on the previous result.
+
+#### Evaluation Order
+
+It is important to understand the sequence of transformations from a sensor input to the final output which is exported to Prometheus. The steps are as follows:
+
+1. The sensor input is converted to a number. If a `string_value_mapping` is configured, it is consulted for the conversion.
+1. If an `expression` is configured, it is evaluated using the converted number. The result of the evaluation replaces the converted sensor value.
+1. If `force_monotonicy` is set to `true`, any new value that is smaller than the previous one is considered to be a counter reset. When a reset is detected, the previous value becomes the value offset which is automatically added to each consecutive value. The offset is persistet between restarts of mqtt2prometheus.
+1. If `mqtt_value_scale` is set to a non-zero value, it is applied to the the value to yield the final metric value.
 
 ## Frequently Asked Questions
 

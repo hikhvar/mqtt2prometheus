@@ -138,6 +138,7 @@ type MetricConfig struct {
 	Help               string                    `yaml:"help"`
 	ValueType          string                    `yaml:"type"`
 	OmitTimestamp      bool                      `yaml:"omit_timestamp"`
+	Expression         string                    `yaml:"expression"`
 	ForceMonotonicy    bool                      `yaml:"force_monotonicy"`
 	ConstantLabels     map[string]string         `yaml:"const_labels"`
 	StringValueMapping *StringValueMappingConfig `yaml:"string_value_mapping"`
@@ -233,7 +234,7 @@ func LoadConfig(configFile string) (Config, error) {
 	}
 	if forcesMonotonicy {
 		if err := os.MkdirAll(cfg.Cache.StateDir, 0755); err != nil {
-			return Config{}, err
+			return Config{}, fmt.Errorf("failed to create directory %q: %w", cfg.Cache.StateDir, err)
 		}
 	}
 

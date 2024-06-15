@@ -2,14 +2,15 @@ package mqttclient
 
 import (
 	mqtt "github.com/eclipse/paho.mqtt.golang"
-	"go.uber.org/zap"
+	"github.com/go-kit/log"
+	"github.com/go-kit/log/level"
 )
 
 type SubscribeOptions struct {
 	Topic             string
 	QoS               byte
 	OnMessageReceived mqtt.MessageHandler
-	Logger            *zap.Logger
+	Logger            log.Logger
 }
 
 func Subscribe(connectionOptions *mqtt.ClientOptions, subscribeOptions SubscribeOptions) error {
@@ -17,10 +18,10 @@ func Subscribe(connectionOptions *mqtt.ClientOptions, subscribeOptions Subscribe
 	connectionOptions.OnConnect = func(client mqtt.Client) {
 		logger := subscribeOptions.Logger
 		oldConnect(client)
-		logger.Info("Connected to MQTT Broker")
-		logger.Info("Will subscribe to topic", zap.String("topic", subscribeOptions.Topic))
+		level.Info(logger).Log("msg", "Connected to MQTT Broker")
+		level.Info(logger).Log("msg", "Will subscribe to topic", "topic", subscribeOptions.Topic)
 		if token := client.Subscribe(subscribeOptions.Topic, subscribeOptions.QoS, subscribeOptions.OnMessageReceived); token.Wait() && token.Error() != nil {
-			logger.Error("Could not subscribe", zap.Error(token.Error()))
+			level.Error(logger).Log("msg", "Could not subscribe", "err", token.Error())
 		}
 	}
 	client := mqtt.NewClient(connectionOptions)

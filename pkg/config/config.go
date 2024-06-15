@@ -8,7 +8,8 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"go.uber.org/zap"
+	"github.com/go-kit/log"
+	"github.com/go-kit/log/level"
 	"gopkg.in/yaml.v2"
 )
 
@@ -174,7 +175,7 @@ func (mc *MetricConfig) PrometheusValueType() prometheus.ValueType {
 	}
 }
 
-func LoadConfig(configFile string, logger *zap.Logger) (Config, error) {
+func LoadConfig(configFile string, logger log.Logger) (Config, error) {
 	configData, err := ioutil.ReadFile(configFile)
 	if err != nil {
 		return Config{}, err
@@ -241,7 +242,7 @@ func LoadConfig(configFile string, logger *zap.Logger) (Config, error) {
 			if m.ErrorValue != nil {
 				return Config{}, fmt.Errorf("metric %s/%s: cannot set both string_value_mapping.error_value and error_value (string_value_mapping.error_value is deprecated).", m.MQTTName, m.PrometheusName)
 			}
-			logger.Warn("string_value_mapping.error_value is deprecated: please use error_value at the metric level.", zap.String("prometheusName", m.PrometheusName), zap.String("MQTTName", m.MQTTName))
+			level.Warn(logger).Log("msg", "string_value_mapping.error_value is deprecated: please use error_value at the metric level.", "prometheusName", m.PrometheusName, "MQTTName", m.MQTTName)
 		}
 	}
 	if forcesMonotonicy {

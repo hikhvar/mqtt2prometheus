@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/go-kit/log"
+	"github.com/go-kit/log/level"
 	"github.com/hikhvar/mqtt2prometheus/pkg/config"
 	gocache "github.com/patrickmn/go-cache"
 	"github.com/prometheus/client_golang/prometheus"
-	"go.uber.org/zap"
 )
 
 type Collector interface {
@@ -18,7 +19,7 @@ type Collector interface {
 type MemoryCachedCollector struct {
 	cache        *gocache.Cache
 	descriptions []*prometheus.Desc
-	logger       *zap.Logger
+	logger       log.Logger
 }
 
 type Metric struct {
@@ -36,7 +37,7 @@ type CacheItem struct {
 
 type MetricCollection []Metric
 
-func NewCollector(defaultTimeout time.Duration, possibleMetrics []config.MetricConfig, logger *zap.Logger) Collector {
+func NewCollector(defaultTimeout time.Duration, possibleMetrics []config.MetricConfig, logger log.Logger) Collector {
 	var descs []*prometheus.Desc
 	for _, m := range possibleMetrics {
 		descs = append(descs, m.PrometheusDescription())
@@ -69,7 +70,7 @@ func (c *MemoryCachedCollector) Collect(mc chan<- prometheus.Metric) {
 		item := metricsRaw.Object.(CacheItem)
 		device, metric := item.DeviceID, item.Metric
 		if metric.Description == nil {
-			c.logger.Warn("empty description", zap.String("topic", metric.Topic), zap.Float64("value", metric.Value))
+			level.Warn(c.logger).Log("msg", "empty description", "topic", metric.Topic, "value", metric.Value)
 		}
 		m := prometheus.MustNewConstMetric(
 			metric.Description,

@@ -17,8 +17,8 @@ func Fuzz(data []byte) int {
 		{
 			PrometheusName: "enabled",
 			ValueType:      "gauge",
+			ErrorValue: floatP(12333),
 			StringValueMapping: &config.StringValueMappingConfig{
-				ErrorValue: floatP(12333),
 				Map: map[string]float64{
 					"foo": 112,
 					"bar": 2,

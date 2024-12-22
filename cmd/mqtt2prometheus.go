@@ -80,7 +80,7 @@ func main() {
 	logger := mustSetupLogger()
 	defer logger.Sync() //nolint:errcheck
 	c := make(chan os.Signal, 1)
-	cfg, err := config.LoadConfig(*configFlag)
+	cfg, err := config.LoadConfig(*configFlag, logger)
 	if err != nil {
 		logger.Fatal("Could not load config", zap.Error(err))
 	}

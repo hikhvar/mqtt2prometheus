@@ -241,15 +241,15 @@ metrics:
   # A map of string to string for constant labels. This labels will be attached to every prometheus metric
    const_labels:
     sensor_type: ikea
+  # When specified, metric value to use if a value cannot be parsed (match cannot be found in the map above, invalid float parsing, expression fails, ...)
+  # If not specified, parsing error will occur.
+  error_value: 1
   # When specified, enables mapping between string values to metric values.
    string_value_mapping:
     # A map of string to metric value.
     map:
      off: 0
      low: 0
-    # Metric value to use if a match cannot be found in the map above.
-    # If not specified, parsing error will occur.
-    error_value: 1
   # The name of the metric in prometheus
  - prom_name: total_light_usage_seconds
   # The name of the metric in a MQTT JSON message
@@ -265,15 +265,15 @@ metrics:
   # A map of string to string for constant labels. This labels will be attached to every prometheus metric
    const_labels:
     sensor_type: ikea
+  # Metric value to use if a value cannot be parsed (match cannot be found in the map above, invalid float parsing, ...)
+  # If not specified, parsing error will occur.
+  error_value: 1
   # When specified, enables mapping between string values to metric values.
    string_value_mapping:
     # A map of string to metric value.
     map:
      off: 0
      low: 0
-    # Metric value to use if a match cannot be found in the map above.
-    # If not specified, parsing error will occur.
-    error_value: 1
   # Sum up the time the light is on, see the section "Expressions" below.
   expression: "value > 0 ? last_result + elapsed.Seconds() : last_result"
   # The name of the metric in prometheus

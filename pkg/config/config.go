@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"go.uber.org/zap"
 	"gopkg.in/yaml.v2"
 )
 
@@ -144,11 +145,14 @@ type MetricConfig struct {
 	ConstantLabels     map[string]string         `yaml:"const_labels"`
 	StringValueMapping *StringValueMappingConfig `yaml:"string_value_mapping"`
 	MQTTValueScale     float64                   `yaml:"mqtt_value_scale"`
+	// ErrorValue is used while error during value parsing
+	ErrorValue         *float64                  `yaml:"error_value"`
 }
 
 // StringValueMappingConfig defines the mapping from string to float
 type StringValueMappingConfig struct {
-	// ErrorValue is used when no mapping is found in Map
+	// ErrorValue was used when no mapping is found in Map
+	// deprecated, a warning will be issued to migrate to metric level
 	ErrorValue *float64           `yaml:"error_value"`
 	Map        map[string]float64 `yaml:"map"`
 }
@@ -170,7 +174,7 @@ func (mc *MetricConfig) PrometheusValueType() prometheus.ValueType {
 	}
 }
 
-func LoadConfig(configFile string) (Config, error) {
+func LoadConfig(configFile string, logger *zap.Logger) (Config, error) {
 	configData, err := ioutil.ReadFile(configFile)
 	if err != nil {
 		return Config{}, err
@@ -231,6 +235,13 @@ func LoadConfig(configFile string) (Config, error) {
 	for _, m := range cfg.Metrics {
 		if m.ForceMonotonicy {
 			forcesMonotonicy = true
+		}
+
+		if m.StringValueMapping != nil && m.StringValueMapping.ErrorValue != nil {
+			if m.ErrorValue != nil {
+				return Config{}, fmt.Errorf("metric %s/%s: cannot set both string_value_mapping.error_value and error_value (string_value_mapping.error_value is deprecated).", m.MQTTName, m.PrometheusName)
+			}
+			logger.Warn("string_value_mapping.error_value is deprecated: please use error_value at the metric level.", zap.String("prometheusName", m.PrometheusName), zap.String("MQTTName", m.MQTTName))
 		}
 	}
 	if forcesMonotonicy {

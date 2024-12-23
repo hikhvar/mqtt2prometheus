@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/antonmedv/expr"
-	"github.com/antonmedv/expr/vm"
+	"github.com/expr-lang/expr"
+	"github.com/expr-lang/expr/vm"
 	"github.com/hikhvar/mqtt2prometheus/pkg/config"
 	"gopkg.in/yaml.v2"
 )

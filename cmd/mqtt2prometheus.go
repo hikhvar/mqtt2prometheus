@@ -151,9 +151,16 @@ func main() {
 		time.Sleep(10 * time.Second)
 	}
 
-	prometheus.MustRegister(ingest.Collector())
-	prometheus.MustRegister(collector)
-	http.Handle("/metrics", promhttp.Handler())
+	var gatherer prometheus.Gatherer
+	if cfg.EnableProfiling {
+		gatherer = prometheus.DefaultGatherer
+	} else {
+		reg := prometheus.NewRegistry()
+		reg.MustRegister(ingest.Collector())
+		reg.MustRegister(collector)
+		gatherer = reg
+	}
+	http.Handle("/metrics", promhttp.HandlerFor(gatherer, promhttp.HandlerOpts{}))
 	s := &http.Server{
 		Addr:    getListenAddress(),
 		Handler: http.DefaultServeMux,

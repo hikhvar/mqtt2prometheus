@@ -89,10 +89,11 @@ func MustNewRegexp(pattern string) *Regexp {
 }
 
 type Config struct {
-	JsonParsing *JsonParsingConfig `yaml:"json_parsing,omitempty"`
-	Metrics     []MetricConfig     `yaml:"metrics"`
-	MQTT        *MQTTConfig        `yaml:"mqtt,omitempty"`
-	Cache       *CacheConfig       `yaml:"cache,omitempty"`
+	JsonParsing     *JsonParsingConfig `yaml:"json_parsing,omitempty"`
+	Metrics         []MetricConfig     `yaml:"metrics"`
+	MQTT            *MQTTConfig        `yaml:"mqtt,omitempty"`
+	Cache           *CacheConfig       `yaml:"cache,omitempty"`
+	EnableProfiling bool               `yaml:"enable_profiling_metrics,omitempty"`
 }
 
 type CacheConfig struct {

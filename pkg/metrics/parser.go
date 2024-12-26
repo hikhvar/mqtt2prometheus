@@ -27,6 +27,8 @@ type dynamicState struct {
 	LastExprRawValue interface{} `yaml:"last_expr_raw_value"`
 	// Last result returned from evaluating the given expression
 	LastExprResult float64 `yaml:"last_expr_result"`
+	// Last result (String) returned from evaluating the given expression
+	LastExprResultString string `yaml:"last_expr_result_string"`
 	// Last result returned from evaluating the given expression
 	LastExprTimestamp time.Time `yaml:"last_expr_timestamp"`
 }
@@ -270,11 +272,26 @@ func (p *Parser) parseMetric(cfg *config.MetricConfig, metricID string, value in
 		ingestTime = now()
 	}
 
+	// generate dynamic labels
+	var labels map[string]string
+	if len(cfg.DynamicLabels) > 0 {
+		labels = make(map[string]string, len(cfg.DynamicLabels))
+		for k, v := range cfg.DynamicLabels {
+			value, err := p.evalExpressionLabel(metricID, k, v, value, metricValue)
+			if err != nil {
+				return Metric{}, err
+			}
+			labels[k] = value
+		}
+	}
+
 	return Metric{
 		Description: cfg.PrometheusDescription(),
 		Value:       metricValue,
 		ValueType:   cfg.PrometheusValueType(),
 		IngestTime:  ingestTime,
+		Labels:      labels,
+		LabelsKeys:  cfg.DynamicLabelsKeys(),
 	}, nil
 }
 
@@ -403,6 +420,51 @@ func (p *Parser) evalExpressionValue(metricID, code string, raw_value interface{
 	// Update the dynamic state
 	ms.dynamic.LastExprResult = ret
 	ms.dynamic.LastExprRawValue = raw_value
+	ms.dynamic.LastExprValue = value
+	ms.dynamic.LastExprTimestamp = now()
+
+	return ret, nil
+}
+
+// evalExpressionLabel runs the given code in the metric's environment and returns the result.
+// In case of an error, the original value is returned.
+func (p *Parser) evalExpressionLabel(metricID, label, code string, rawValue interface{}, value float64) (string, error) {
+	ms, err := p.getMetricState(label + "@" + metricID)
+	if err != nil {
+		return "", err
+	}
+	if ms.program == nil {
+		ms.env = defaultExprEnv()
+		ms.program, err = expr.Compile(code, expr.Env(ms.env))
+		if err != nil {
+			return "", fmt.Errorf("failed to compile dynamic label expression %q: %w", code, err)
+		}
+		// Trigger flushing the new state to disk.
+		ms.lastWritten = time.Time{}
+	}
+
+	// Update the environment
+	ms.env[env_raw_value] = rawValue
+	ms.env[env_value] = value
+	ms.env[env_last_value] = ms.dynamic.LastExprValue
+	ms.env[env_last_raw_value] = ms.dynamic.LastExprRawValue
+	ms.env[env_last_result] = ms.dynamic.LastExprResultString
+	if ms.dynamic.LastExprTimestamp.IsZero() {
+		ms.env[env_elapsed] = time.Duration(0)
+	} else {
+		ms.env[env_elapsed] = now().Sub(ms.dynamic.LastExprTimestamp)
+	}
+
+	result, err := expr.Run(ms.program, ms.env)
+	if err != nil {
+		return "", fmt.Errorf("failed to evaluate dynamic label expression %q: %w", code, err)
+	}
+
+	// convert to string
+	ret := fmt.Sprint(result)
+
+	// Update the dynamic state
+	ms.dynamic.LastExprResultString = ret
 	ms.dynamic.LastExprValue = value
 	ms.dynamic.LastExprTimestamp = now()
 

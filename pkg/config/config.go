@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"regexp"
+	"sort"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -144,6 +145,7 @@ type MetricConfig struct {
 	Expression         string                    `yaml:"expression"`
 	ForceMonotonicy    bool                      `yaml:"force_monotonicy"`
 	ConstantLabels     map[string]string         `yaml:"const_labels"`
+	DynamicLabels      map[string]string         `yaml:"dynamic_labels"`
 	StringValueMapping *StringValueMappingConfig `yaml:"string_value_mapping"`
 	MQTTValueScale     float64                   `yaml:"mqtt_value_scale"`
 	// ErrorValue is used while error during value parsing
@@ -159,8 +161,9 @@ type StringValueMappingConfig struct {
 }
 
 func (mc *MetricConfig) PrometheusDescription() *prometheus.Desc {
+	labels := append([]string{"sensor", "topic"}, mc.DynamicLabelsKeys()...)
 	return prometheus.NewDesc(
-		mc.PrometheusName, mc.Help, []string{"sensor", "topic"}, mc.ConstantLabels,
+		mc.PrometheusName, mc.Help, labels, mc.ConstantLabels,
 	)
 }
 
@@ -173,6 +176,15 @@ func (mc *MetricConfig) PrometheusValueType() prometheus.ValueType {
 	default:
 		return prometheus.UntypedValue
 	}
+}
+
+func (mc *MetricConfig) DynamicLabelsKeys() []string {
+	var labels []string
+	for k := range mc.DynamicLabels {
+		labels = append(labels, k)
+	}
+	sort.Strings(labels)
+	return labels
 }
 
 func LoadConfig(configFile string, logger *zap.Logger) (Config, error) {

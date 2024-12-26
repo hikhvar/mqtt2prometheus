@@ -27,6 +27,8 @@ type Metric struct {
 	ValueType   prometheus.ValueType
 	IngestTime  time.Time
 	Topic       string
+	Labels      map[string]string
+	LabelsKeys  []string
 }
 
 type CacheItem struct {
@@ -71,12 +73,18 @@ func (c *MemoryCachedCollector) Collect(mc chan<- prometheus.Metric) {
 		if metric.Description == nil {
 			c.logger.Warn("empty description", zap.String("topic", metric.Topic), zap.Float64("value", metric.Value))
 		}
+
+		// set dynamic labels with the right order starting with "sensor" and "topic"
+		labels := []string{device, metric.Topic}
+		for _, k := range metric.LabelsKeys {
+			labels = append(labels, metric.Labels[k])
+		}
+
 		m := prometheus.MustNewConstMetric(
 			metric.Description,
 			metric.ValueType,
 			metric.Value,
-			device,
-			metric.Topic,
+			labels...,
 		)
 
 		if metric.IngestTime.IsZero() {

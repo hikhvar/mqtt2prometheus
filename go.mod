@@ -19,7 +19,7 @@ require (
 	github.com/cespare/xxhash/v2 v2.1.1 // indirect
 	github.com/go-kit/log v0.1.0 // indirect
 	github.com/go-logfmt/logfmt v0.5.0 // indirect
-	github.com/golang/protobuf v1.4.3 // indirect
+	github.com/golang/protobuf v1.5.0 // indirect
 	github.com/gorilla/websocket v1.4.2 // indirect
 	github.com/jpillora/backoff v1.0.0 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
@@ -36,5 +36,5 @@ require (
 	golang.org/x/sys v0.0.0-20210615035016-665e8c7367d1 // indirect
 	golang.org/x/text v0.3.6 // indirect
 	google.golang.org/appengine v1.6.6 // indirect
-	google.golang.org/protobuf v1.26.0-rc.1 // indirect
+	google.golang.org/protobuf v1.33.0 // indirect
 )

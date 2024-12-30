@@ -667,6 +667,32 @@ func TestParser_parseMetric(t *testing.T) {
 				Value:       11.0, // 600 watts for 1 minute = 10 Wh
 			},
 		},
+		{
+			name: "raw expression, step 1",
+			fields: fields{
+				map[string][]*config.MetricConfig{
+					"apower": {
+						{
+							PrometheusName: "total_energy",
+							ValueType:      "gauge",
+							OmitTimestamp:  true,
+							RawExpression:  `float(join(filter(split(string(raw_value), ""), { # matches "^[0-9\\.]$" }), ""))`,
+					},
+					},
+				},
+			},
+			elapseNow: 3 * time.Minute,
+			args: args{
+				metricPath: "apower",
+				deviceID:   "shellyplus1pm-foo",
+				value:      "H42Jj.j44",
+			},
+			want: Metric{
+				Description: prometheus.NewDesc("total_energy", "", []string{"sensor", "topic"}, nil),
+				ValueType:   prometheus.GaugeValue,
+				Value:       42.44,
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -797,7 +823,7 @@ func TestParser_evalExpression(t *testing.T) {
 
 			p := NewParser(nil, ".", stateDir)
 			for i, value := range tt.values {
-				got, err := p.evalExpression(id, tt.expression, value)
+				got, err := p.evalExpressionValue(id, tt.expression, value, value)
 				want := tt.results[i]
 				if err != nil {
 					t.Errorf("evaluating the %dth value '%v' failed: %v", i, value, err)

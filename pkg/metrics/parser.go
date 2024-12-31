@@ -179,8 +179,12 @@ func (p *Parser) parseMetric(cfg *config.MetricConfig, metricID string, value in
 			floatValue, ok := cfg.StringValueMapping.Map[strValue]
 			if ok {
 				metricValue = floatValue
+
+			// deprecated, replaced by ErrorValue from the upper level
 			} else if cfg.StringValueMapping.ErrorValue != nil {
 				metricValue = *cfg.StringValueMapping.ErrorValue
+			} else if cfg.ErrorValue != nil {
+				metricValue = *cfg.ErrorValue
 			} else {
 				return Metric{}, fmt.Errorf("got unexpected string data '%s'", strValue)
 			}
@@ -190,27 +194,42 @@ func (p *Parser) parseMetric(cfg *config.MetricConfig, metricID string, value in
 			// otherwise try to parse float
 			floatValue, err := strconv.ParseFloat(strValue, 64)
 			if err != nil {
-				return Metric{}, fmt.Errorf("got data with unexpectd type: %T ('%v') and failed to parse to float", value, value)
+				if cfg.ErrorValue != nil {
+					metricValue = *cfg.ErrorValue
+				} else {
+					return Metric{}, fmt.Errorf("got data with unexpectd type: %T ('%v') and failed to parse to float", value, value)
+				}
+			} else {
+				metricValue = floatValue
 			}
-			metricValue = floatValue
 
 		}
 
 	} else if floatValue, ok := value.(float64); ok {
 		metricValue = floatValue
+	} else if cfg.ErrorValue != nil {
+		metricValue = *cfg.ErrorValue
 	} else {
 		return Metric{}, fmt.Errorf("got data with unexpectd type: %T ('%v')", value, value)
 	}
 
 	if cfg.Expression != "" {
 		if metricValue, err = p.evalExpression(metricID, cfg.Expression, metricValue); err != nil {
-			return Metric{}, err
+			if cfg.ErrorValue != nil {
+				metricValue = *cfg.ErrorValue
+			} else {
+				return Metric{}, err
+			}
 		}
 	}
 
 	if cfg.ForceMonotonicy {
 		if metricValue, err = p.enforceMonotonicy(metricID, metricValue); err != nil {
-			return Metric{}, err
+			if cfg.ErrorValue != nil {
+				metricValue = *cfg.ErrorValue
+			} else {
+				return Metric{}, err
+			}
 		}
 	}
 

@@ -39,6 +39,9 @@ func TestParser_parseMetric(t *testing.T) {
 		deviceID   string
 		value      interface{}
 	}
+
+	var errorValue float64 = 42.44
+
 	tests := []struct {
 		name      string
 		fields    fields
@@ -142,6 +145,32 @@ func TestParser_parseMetric(t *testing.T) {
 				value:      "12.6.5",
 			},
 			wantErr: true,
+		},
+		{
+			name: "string value failure with errorValue",
+			fields: fields{
+				map[string][]*config.MetricConfig{
+					"temperature": {
+						{
+							PrometheusName: "temperature",
+							ValueType:      "gauge",
+							ErrorValue:     &errorValue,
+						},
+					},
+				},
+			},
+			args: args{
+				metricPath: "temperature",
+				deviceID:   "dht22",
+				value:      "12.6.5",
+			},
+			want: Metric{
+				Description: prometheus.NewDesc("temperature", "", []string{"sensor", "topic"}, nil),
+				ValueType:   prometheus.GaugeValue,
+				Value:       errorValue,
+				IngestTime:  testNow(),
+				Topic:       "",
+			},
 		},
 		{
 			name: "float value",
@@ -335,8 +364,8 @@ func TestParser_parseMetric(t *testing.T) {
 						{
 							PrometheusName: "enabled",
 							ValueType:      "gauge",
+							ErrorValue: floatP(12333),
 							StringValueMapping: &config.StringValueMappingConfig{
-								ErrorValue: floatP(12333),
 								Map: map[string]float64{
 									"foo": 112,
 									"bar": 2,
@@ -392,8 +421,8 @@ func TestParser_parseMetric(t *testing.T) {
 						{
 							PrometheusName: "enabled",
 							ValueType:      "gauge",
+							ErrorValue: floatP(12333),
 							StringValueMapping: &config.StringValueMappingConfig{
-								ErrorValue: floatP(12333),
 								Map: map[string]float64{
 									"foo": 112,
 									"bar": 2,
@@ -419,7 +448,6 @@ func TestParser_parseMetric(t *testing.T) {
 							PrometheusName: "enabled",
 							ValueType:      "gauge",
 							StringValueMapping: &config.StringValueMappingConfig{
-								ErrorValue: floatP(12333),
 								Map: map[string]float64{
 									"foo": 112,
 									"bar": 2,

@@ -84,6 +84,12 @@ func toInt64(i interface{}) int64 {
 		return v
 	case time.Duration:
 		return int64(v)
+	case string:
+		value, err := strconv.ParseInt(v, 10, 64)
+		if err != nil {
+			panic(err)
+		}
+		return value
 	default:
 		return v.(int64) // Hope for the best
 	}
@@ -103,6 +109,12 @@ func toFloat64(i interface{}) float64 {
 		return float64(v)
 	case time.Duration:
 		return float64(v)
+	case string:
+		value, err := strconv.ParseFloat(v, 64)
+		if err != nil {
+			panic(err)
+		}
+		return value
 	default:
 		return v.(float64) // Hope for the best
 	}

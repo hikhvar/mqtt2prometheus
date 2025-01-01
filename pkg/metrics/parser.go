@@ -24,6 +24,8 @@ type dynamicState struct {
 	// Last value that was used for evaluating the given expression
 	LastExprValue float64 `yaml:"last_expr_value"`
 	// Last result returned from evaluating the given expression
+	LastExprRawValue interface{} `yaml:"last_expr_raw_value"`
+	// Last result returned from evaluating the given expression
 	LastExprResult float64 `yaml:"last_expr_result"`
 	// Last result returned from evaluating the given expression
 	LastExprTimestamp time.Time `yaml:"last_expr_timestamp"`
@@ -53,19 +55,21 @@ type Parser struct {
 
 // Identifiers within the expression evaluation environment.
 const (
-	env_value       = "value"
-	env_last_value  = "last_value"
-	env_last_result = "last_result"
-	env_elapsed     = "elapsed"
-	env_now         = "now"
-	env_int         = "int"
-	env_float       = "float"
-	env_round       = "round"
-	env_ceil        = "ceil"
-	env_floor       = "floor"
-	env_abs         = "abs"
-	env_min         = "min"
-	env_max         = "max"
+	env_raw_value      = "raw_value"
+	env_value          = "value"
+	env_last_value     = "last_value"
+	env_last_raw_value = "last_raw_value"
+	env_last_result    = "last_result"
+	env_elapsed        = "elapsed"
+	env_now            = "now"
+	env_int            = "int"
+	env_float          = "float"
+	env_round          = "round"
+	env_ceil           = "ceil"
+	env_floor          = "floor"
+	env_abs            = "abs"
+	env_min            = "min"
+	env_max            = "max"
 )
 
 var now = time.Now
@@ -124,6 +128,7 @@ func toFloat64(i interface{}) float64 {
 func defaultExprEnv() map[string]interface{} {
 	return map[string]interface{}{
 		// Variables
+		env_raw_value:   nil,
 		env_value:       0.0,
 		env_last_value:  0.0,
 		env_last_result: 0.0,
@@ -177,60 +182,71 @@ func (p *Parser) parseMetric(cfg *config.MetricConfig, metricID string, value in
 	var metricValue float64
 	var err error
 
-	if boolValue, ok := value.(bool); ok {
-		if boolValue {
-			metricValue = 1
-		} else {
-			metricValue = 0
-		}
-	} else if strValue, ok := value.(string); ok {
-
-		// If string value mapping is defined, use that
-		if cfg.StringValueMapping != nil {
-
-			floatValue, ok := cfg.StringValueMapping.Map[strValue]
-			if ok {
-				metricValue = floatValue
-
-			// deprecated, replaced by ErrorValue from the upper level
-			} else if cfg.StringValueMapping.ErrorValue != nil {
-				metricValue = *cfg.StringValueMapping.ErrorValue
-			} else if cfg.ErrorValue != nil {
-				metricValue = *cfg.ErrorValue
-			} else {
-				return Metric{}, fmt.Errorf("got unexpected string data '%s'", strValue)
-			}
-
-		} else {
-
-			// otherwise try to parse float
-			floatValue, err := strconv.ParseFloat(strValue, 64)
-			if err != nil {
-				if cfg.ErrorValue != nil {
-					metricValue = *cfg.ErrorValue
-				} else {
-					return Metric{}, fmt.Errorf("got data with unexpectd type: %T ('%v') and failed to parse to float", value, value)
-				}
-			} else {
-				metricValue = floatValue
-			}
-
-		}
-
-	} else if floatValue, ok := value.(float64); ok {
-		metricValue = floatValue
-	} else if cfg.ErrorValue != nil {
-		metricValue = *cfg.ErrorValue
-	} else {
-		return Metric{}, fmt.Errorf("got data with unexpectd type: %T ('%v')", value, value)
-	}
-
-	if cfg.Expression != "" {
-		if metricValue, err = p.evalExpression(metricID, cfg.Expression, metricValue); err != nil {
+	if cfg.RawExpression != "" {
+		if metricValue, err = p.evalExpressionValue(metricID, cfg.RawExpression, value, metricValue); err != nil {
 			if cfg.ErrorValue != nil {
 				metricValue = *cfg.ErrorValue
 			} else {
 				return Metric{}, err
+			}
+		}
+	} else {
+
+		if boolValue, ok := value.(bool); ok {
+			if boolValue {
+				metricValue = 1
+			} else {
+				metricValue = 0
+			}
+		} else if strValue, ok := value.(string); ok {
+
+			// If string value mapping is defined, use that
+			if cfg.StringValueMapping != nil {
+
+				floatValue, ok := cfg.StringValueMapping.Map[strValue]
+				if ok {
+					metricValue = floatValue
+
+				// deprecated, replaced by ErrorValue from the upper level
+				} else if cfg.StringValueMapping.ErrorValue != nil {
+					metricValue = *cfg.StringValueMapping.ErrorValue
+				} else if cfg.ErrorValue != nil {
+					metricValue = *cfg.ErrorValue
+				} else {
+					return Metric{}, fmt.Errorf("got unexpected string data '%s'", strValue)
+				}
+
+			} else {
+
+				// otherwise try to parse float
+				floatValue, err := strconv.ParseFloat(strValue, 64)
+				if err != nil {
+					if cfg.ErrorValue != nil {
+						metricValue = *cfg.ErrorValue
+					} else {
+						return Metric{}, fmt.Errorf("got data with unexpectd type: %T ('%v') and failed to parse to float", value, value)
+					}
+				} else {
+					metricValue = floatValue
+				}
+
+			}
+
+		} else if floatValue, ok := value.(float64); ok {
+			metricValue = floatValue
+		} else if cfg.ErrorValue != nil {
+			metricValue = *cfg.ErrorValue
+		} else {
+			return Metric{}, fmt.Errorf("got data with unexpectd type: %T ('%v')", value, value)
+		}
+
+		if cfg.Expression != "" {
+			if metricValue, err = p.evalExpressionValue(metricID, cfg.Expression, value, metricValue); err != nil {
+				if cfg.ErrorValue != nil {
+					metricValue = *cfg.ErrorValue
+				} else {
+					return Metric{}, err
+				}
 			}
 		}
 	}
@@ -348,9 +364,9 @@ func (p *Parser) enforceMonotonicy(metricID string, value float64) (float64, err
 	return value + ms.dynamic.Offset, nil
 }
 
-// evalExpression runs the given code in the metric's environment and returns the result.
+// evalExpressionValue runs the given code in the metric's environment and returns the result.
 // In case of an error, the original value is returned.
-func (p *Parser) evalExpression(metricID, code string, value float64) (float64, error) {
+func (p *Parser) evalExpressionValue(metricID, code string, raw_value interface{}, value float64) (float64, error) {
 	ms, err := p.getMetricState(metricID)
 	if err != nil {
 		return value, err
@@ -366,8 +382,10 @@ func (p *Parser) evalExpression(metricID, code string, value float64) (float64, 
 	}
 
 	// Update the environment
+	ms.env[env_raw_value] = raw_value
 	ms.env[env_value] = value
 	ms.env[env_last_value] = ms.dynamic.LastExprValue
+	ms.env[env_last_raw_value] = ms.dynamic.LastExprRawValue
 	ms.env[env_last_result] = ms.dynamic.LastExprResult
 	if ms.dynamic.LastExprTimestamp.IsZero() {
 		ms.env[env_elapsed] = time.Duration(0)
@@ -384,6 +402,7 @@ func (p *Parser) evalExpression(metricID, code string, value float64) (float64, 
 
 	// Update the dynamic state
 	ms.dynamic.LastExprResult = ret
+	ms.dynamic.LastExprRawValue = raw_value
 	ms.dynamic.LastExprValue = value
 	ms.dynamic.LastExprTimestamp = now()
 

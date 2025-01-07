@@ -140,6 +140,7 @@ type MetricConfig struct {
 	Help               string                    `yaml:"help"`
 	ValueType          string                    `yaml:"type"`
 	OmitTimestamp      bool                      `yaml:"omit_timestamp"`
+	RawExpression      string                    `yaml:"raw_expression"`
 	Expression         string                    `yaml:"expression"`
 	ForceMonotonicy    bool                      `yaml:"force_monotonicy"`
 	ConstantLabels     map[string]string         `yaml:"const_labels"`
@@ -242,6 +243,10 @@ func LoadConfig(configFile string, logger *zap.Logger) (Config, error) {
 				return Config{}, fmt.Errorf("metric %s/%s: cannot set both string_value_mapping.error_value and error_value (string_value_mapping.error_value is deprecated).", m.MQTTName, m.PrometheusName)
 			}
 			logger.Warn("string_value_mapping.error_value is deprecated: please use error_value at the metric level.", zap.String("prometheusName", m.PrometheusName), zap.String("MQTTName", m.MQTTName))
+		}
+
+		if m.Expression != "" && m.RawExpression != ""  {
+			return Config{}, fmt.Errorf("metric %s/%s: expression and raw_expression are mutually exclusive.", m.MQTTName, m.PrometheusName)
 		}
 	}
 	if forcesMonotonicy {

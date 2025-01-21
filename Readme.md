@@ -3,14 +3,14 @@
 
 
 This exporter translates from MQTT topics to prometheus metrics. The core design is that clients send arbitrary JSON messages
-on the topics. The translation between the MQTT representation and prometheus metrics is configured in the mqtt2prometheus exporter since we often can not change the IoT devices sending 
+on the topics. The translation between the MQTT representation and prometheus metrics is configured in the mqtt2prometheus exporter since we often can not change the IoT devices sending
 the messages. Clients can push metrics via MQTT to an MQTT Broker. This exporter subscribes to the broker and
 expose the received messages as prometheus metrics. Currently, the exporter supports only MQTT 3.1.
 
 ![Overview Diagram](docs/overview.drawio.svg)
 
 I wrote this exporter to expose metrics from small embedded sensors based on the NodeMCU to prometheus.
-The used arduino sketch can be found in the [dht22tomqtt](https://github.com/hikhvar/dht22tomqtt) repository. 
+The used arduino sketch can be found in the [dht22tomqtt](https://github.com/hikhvar/dht22tomqtt) repository.
 A local hacking environment with mqtt2prometheus, a MQTT broker and a prometheus server is in the [hack](https://github.com/hikhvar/mqtt2prometheus/tree/master/hack) directory.
 
 ## Assumptions about Messages and Topics
@@ -36,7 +36,7 @@ The label `sensor` is extracted with the default `device_id_regex` `(.*/)?(?P<de
 The `device_id_regex` is able to extract exactly one label from the topic path. It extracts only the `deviceid` regex capture group into the `sensor` prometheus label.
 To extract more labels from the topic path, have a look at [this FAQ answer](#extract-more-labels-from-the-topic-path).
 
-The topic path can contain multiple wildcards. MQTT has two wildcards: 
+The topic path can contain multiple wildcards. MQTT has two wildcards:
 * `+`: Single level of hierarchy in the topic path
 * `#`: Many levels of hierarchy in the topic path
 
@@ -58,7 +58,7 @@ addresses
   }
 }
 ```
-Some sensors might use a `.` in the JSON keys. Therefore, there the configuration option `json_parsing.seperator` in 
+Some sensors might use a `.` in the JSON keys. Therefore, there the configuration option `json_parsing.seperator` in
 the exporter config. This allows us to use any other string to separate hierarchies in the gojsonq path.
 E.g let's assume the following MQTT JSON message:
 ```json
@@ -68,7 +68,7 @@ E.g let's assume the following MQTT JSON message:
   }
 }
 ```
-We can now set `json_parsing.seperator` to `/`. This allows us to specify `mqtt_name` as `computed/heat.index`. Keep in mind, 
+We can now set `json_parsing.seperator` to `/`. This allows us to specify `mqtt_name` as `computed/heat.index`. Keep in mind,
 `json_parsing.seperator` is a global setting. This affects all `mqtt_name` fields in your configuration.
 
 Some devices like Shelly Plus H&T publish one metric per-topic in a JSON format:
@@ -88,7 +88,7 @@ To build the exporter run:
 make build
 ```
 
-Only the latest two Go major versions are tested and supported. 
+Only the latest two Go major versions are tested and supported.
 
 ### Docker
 
@@ -96,9 +96,9 @@ Only the latest two Go major versions are tested and supported.
 
 To start the public available image run:
 ```bash
-docker run -it -v "$(pwd)/config.yaml:/config.yaml"  -p  9641:9641 ghcr.io/hikhvar/mqtt2prometheus:latest 
+docker run -it -v "$(pwd)/config.yaml:/config.yaml"  -p  9641:9641 ghcr.io/hikhvar/mqtt2prometheus:latest
 ```
-Please have a look at the [latest relase](https://github.com/hikhvar/mqtt2prometheus/releases/latest) to get a stable image tag. The latest tag may break at any moment in time since latest is pushed into the registries on every git commit in the master branch. 
+Please have a look at the [latest relase](https://github.com/hikhvar/mqtt2prometheus/releases/latest) to get a stable image tag. The latest tag may break at any moment in time since latest is pushed into the registries on every git commit in the master branch.
 
 #### Build The Image locally
 To build a docker container with the mqtt2prometheus exporter included run:
@@ -110,11 +110,11 @@ make container
 To run the container with a given config file:
 
 ```bash
-docker run -it -v "$(pwd)/config.yaml:/config.yaml"  -p 9641:9641 mqtt2prometheus:latest 
+docker run -it -v "$(pwd)/config.yaml:/config.yaml"  -p 9641:9641 mqtt2prometheus:latest
 ```
 
 ## Configuration
-The exporter can be configured via command line and config file. 
+The exporter can be configured via command line and config file.
 
 ### Commandline
 Available command line flags:
@@ -136,10 +136,10 @@ Usage of ./mqtt2prometheus:
   -web-config-file string
         [EXPERIMENTAL] Path to configuration file that can enable TLS or authentication for metric scraping.
   -treat-mqtt-password-as-file-name bool (default: false)
-        treat MQTT2PROM_MQTT_PASSWORD environment variable as a secret file path e.g. /var/run/secrets/mqtt-credential. Useful when docker secret or external credential management agents handle the secret file. 
+        treat MQTT2PROM_MQTT_PASSWORD environment variable as a secret file path e.g. /var/run/secrets/mqtt-credential. Useful when docker secret or external credential management agents handle the secret file.
 ```
 The logging is implemented via [zap](https://github.com/uber-go/zap). The logs are printed to `stderr` and valid log levels are
-those supported by zap.  
+those supported by zap.
 
 
 ### Config file
@@ -173,7 +173,7 @@ mqtt:
   # A regex used for extracting the metric name from the topic. Must contain a named group for `metricname`.
   metric_name_regex: "(.*/)?(?P<metricname>.*)"
  # Optional: Configures mqtt2prometheus to expect an object containing multiple metrics to be published as the value on an mqtt topic.
- # This is the default. 
+ # This is the default.
  object_per_topic_config:
   # The encoding of the object, currently only json is supported
   encoding: JSON
@@ -202,6 +202,10 @@ metrics:
   # A map of string to string for constant labels. This labels will be attached to every prometheus metric
    const_labels:
     sensor_type: dht22
+  # A map of string to expression for dynamic labels. This labels will be attached to every prometheus metric
+  # expression will be executed for each label every time a metric is processed
+  # dynamic_labels:
+  #  raw_value: "raw_value"
   # The name of the metric in prometheus
  - prom_name: humidity
   # The name of the metric in a MQTT JSON message
@@ -310,7 +314,7 @@ Having the MQTT login details in the config file runs the risk of publishing the
 Create a file to store your login details, for example at `~/secrets/mqtt2prom`:
 ```SHELL
 #!/bin/bash
-export MQTT2PROM_MQTT_USER="myUser" 
+export MQTT2PROM_MQTT_USER="myUser"
 export MQTT2PROM_MQTT_PASSWORD="superpassword"
 ```
 
@@ -330,9 +334,9 @@ Then load that file into the environment before starting the container:
 Create a docker secret to store the password(`mqtt-credential` in the example below), and pass the optional `treat-mqtt-password-as-file-name` command line argument.
 ```docker
   mqtt_exporter_tasmota:
-    image: ghcr.io/hikhvar/mqtt2prometheus:latest 
+    image: ghcr.io/hikhvar/mqtt2prometheus:latest
     secrets:
-      - mqtt-credential 
+      - mqtt-credential
     environment:
       - MQTT2PROM_MQTT_USER=mqtt
       - MQTT2PROM_MQTT_PASSWORD=/var/run/secrets/mqtt-credential
@@ -346,6 +350,9 @@ Create a docker secret to store the password(`mqtt-credential` in the example be
 
 ### Expressions
 
+Expression is a peace of code that is run dynamically for calculate metric value or generate dynamic labels.
+
+#### Metric value
 Metric values can be derived from sensor inputs using complex expressions. Set the metric config option `raw_expression` or `expression` to the desired formular to calculate the result from the input. `raw_expression` and `expression` are mutually exclusives:
 * `raw_expression` is run without raw value conversion. It's `raw_expression` duty to handle the conversion. Only `raw_value` is set while `value` is always set to 0.0. Here is an example which convert datetime (format `HYYMMDDhhmmss`) to unix timestamp:
 ```yaml
@@ -356,11 +363,16 @@ raw_expression: 'date(string(raw_value), "H060102150405", "Europe/Paris").Unix()
 expression: "value > 0 ? last_result + value * elapsed.Seconds() : last_result"
 ```
 
+#### Dynamic labels
+Dynamic labels are derivated from sensor inputs using complex expressions. Define labels and the corresponding expression in the metric config otpion `dynamic_labels`.
+`raw_value` and `value` are both set in this context. The value returned from dynamic labels expression is not typed and will be converted to string before being exported.
+
+#### Expression
 During the evaluation, the following variables are available to the expression:
 * `raw_value` - the raw MQTT sensor value (without any conversion)
 * `value` - the current sensor value (after string-value mapping, if configured)
 * `last_value` - the `value` during the previous expression evaluation
-* `last_result` - the result from the previous expression evaluation
+* `last_result` - the result from the previous expression evaluation (a float for `raw_expression`/`expression`, a string for `dynamic_labels`)
 * `elapsed` - the time that passed since the previous evaluation, as a [Duration](https://pkg.go.dev/time#Duration) value
 
 The [language definition](https://expr-lang.org/docs/v1.9/Language-Definition) describes the expression syntax. In addition, the following functions are available:
@@ -391,7 +403,7 @@ If `raw_expression` is set, the generated value of the expression is exported to
 ## Frequently Asked Questions
 
 ### Listen to multiple Topic Pathes
-The exporter can only listen to one topic_path per instance. If you have to listen to two different topic_paths it is 
+The exporter can only listen to one topic_path per instance. If you have to listen to two different topic_paths it is
 recommended to run two instances of the mqtt2prometheus exporter. You can run both on the same host or if you run in Kubernetes,
 even in the same pod.
 
@@ -411,7 +423,7 @@ heat_index{sensor="storage",topic="devices/workshop/storage"} 15.92
 humidity{sensor="storage",topic="devices/workshop/storage"} 34.60
 ```
 
-The following prometheus [relabel_config](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config) will extract the location from the topic path as well and attaches the `location` label. 
+The following prometheus [relabel_config](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config) will extract the location from the topic path as well and attaches the `location` label.
 ```yaml
 relabel_config:
   - source_labels: [ "topic" ]

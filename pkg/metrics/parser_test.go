@@ -102,6 +102,34 @@ func TestParser_parseMetric(t *testing.T) {
 			},
 		},
 		{
+			name: "string value with dynamic label",
+			fields: fields{
+				map[string][]*config.MetricConfig{
+					"temperature": {
+						{
+							PrometheusName: "temperature",
+							ValueType:      "gauge",
+							DynamicLabels:  map[string]string{"dynamic-label": `replace(raw_value, ".", "")`},
+						},
+					},
+				},
+			},
+			args: args{
+				metricPath: "temperature",
+				deviceID:   "dht22",
+				value:      "12.6",
+			},
+			want: Metric{
+				Description: prometheus.NewDesc("temperature", "", []string{"sensor", "topic", "dynamic-label"}, nil),
+				ValueType:   prometheus.GaugeValue,
+				Value:       12.6,
+				IngestTime:  testNow(),
+				Topic:       "",
+				Labels:      map[string]string{"dynamic-label": "126"},
+				LabelsKeys:  []string{"dynamic-label"},
+			},
+		},
+		{
 			name: "scaled string value",
 			fields: fields{
 				map[string][]*config.MetricConfig{

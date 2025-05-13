@@ -80,8 +80,6 @@ func (c *MemoryCachedCollector) Collect(mc chan<- prometheus.Metric) {
 			labels = append(labels, metric.Labels[k])
 		}
 
-		fmt.Println("Prometheus description", metric.Description)
-
 		m := prometheus.MustNewConstMetric(
 			metric.Description,
 			metric.ValueType,

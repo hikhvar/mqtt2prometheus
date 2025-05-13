@@ -154,17 +154,6 @@ func NewParser(metrics []config.MetricConfig, separator, stateDir string) Parser
 	for i := range metrics {
 		key := metrics[i].MQTTName
 		cfgs[key] = append(cfgs[key], &metrics[i])
-		// for j := range metrics[i].InheritLabels {
-		// 	label := metrics[i].InheritLabels[j]
-		// 	cfgs[key] = append(cfgs[label], &metrics[i])
-		// }
-		// }
-		// fmt.Println("created a new parser config: ", cfgs)
-		// for k, v := range cfgs {
-		// 	fmt.Println(k, "value is", v)
-		// 	for n, p := range v {
-		// 		fmt.Println(n, "nested value is", p)
-		// 	}
 	}
 	return Parser{
 		separator:     separator,
@@ -211,7 +200,6 @@ func (p *Parser) parseInheritedLabels(cfg *config.MetricConfig, m Metric, payloa
 			labels[v] = this_label
 		}
 	}
-	fmt.Println("result labels", labels)
 	return labels, nil
 }
 
@@ -222,7 +210,6 @@ func (p *Parser) parseMetric(cfg *config.MetricConfig, metricID string, value in
 	var err error
 
 	if cfg.RawExpression != "" {
-		fmt.Println("parsing as cfg.RawExpression = nil")
 		if metricValue, err = p.evalExpressionValue(metricID, cfg.RawExpression, value, metricValue); err != nil {
 			if cfg.ErrorValue != nil {
 				metricValue = *cfg.ErrorValue
@@ -233,7 +220,6 @@ func (p *Parser) parseMetric(cfg *config.MetricConfig, metricID string, value in
 	} else {
 
 		if boolValue, ok := value.(bool); ok {
-			fmt.Println("parsing as bool")
 			if boolValue {
 				metricValue = 1
 			} else {
@@ -243,7 +229,6 @@ func (p *Parser) parseMetric(cfg *config.MetricConfig, metricID string, value in
 
 			// If string value mapping is defined, use that
 			if cfg.StringValueMapping != nil {
-				fmt.Println("parsing as StringValueMapping")
 
 				floatValue, ok := cfg.StringValueMapping.Map[strValue]
 				if ok {
@@ -259,7 +244,6 @@ func (p *Parser) parseMetric(cfg *config.MetricConfig, metricID string, value in
 				}
 
 			} else {
-				fmt.Println("Parsing as float")
 
 				// otherwise try to parse float
 				floatValue, err := strconv.ParseFloat(strValue, 64)
@@ -276,17 +260,14 @@ func (p *Parser) parseMetric(cfg *config.MetricConfig, metricID string, value in
 			}
 
 		} else if floatValue, ok := value.(float64); ok {
-			fmt.Println("Not parsing, setting as float64")
 			metricValue = floatValue
 		} else if cfg.ErrorValue != nil {
-			fmt.Println("parsing as ErrorValue")
 			metricValue = *cfg.ErrorValue
 		} else {
 			return Metric{}, fmt.Errorf("got data with unexpectd type: %T ('%v')", value, value)
 		}
 
 		if cfg.Expression != "" {
-			fmt.Println("parsing as Expression")
 			if metricValue, err = p.evalExpressionValue(metricID, cfg.Expression, value, metricValue); err != nil {
 				if cfg.ErrorValue != nil {
 					metricValue = *cfg.ErrorValue
@@ -381,7 +362,6 @@ func (p *Parser) writeMetricState(metricID string, state *metricState) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println("writeMetricState opening file...")
 	f, err := os.OpenFile(p.stateFileName(metricID), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
 		return err
@@ -399,7 +379,6 @@ func (p *Parser) getMetricState(metricID string) (*metricState, error) {
 	var err error
 	state, found := p.states[metricID]
 	if !found {
-		fmt.Println("Parser getMetricState not found")
 		if state, err = p.readMetricState(metricID); err != nil {
 			return nil, err
 		}
@@ -407,7 +386,6 @@ func (p *Parser) getMetricState(metricID string) (*metricState, error) {
 	}
 	// Write the state back to disc every minute.
 	if now().Sub(state.lastWritten) >= time.Minute {
-		fmt.Println("Parser attempting to write")
 		if err = p.writeMetricState(metricID, state); err == nil {
 			state.lastWritten = now()
 		}

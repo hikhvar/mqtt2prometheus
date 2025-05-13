@@ -164,7 +164,6 @@ type StringValueMappingConfig struct {
 func (mc *MetricConfig) PrometheusDescription() *prometheus.Desc {
 	labels := append([]string{"sensor", "topic"}, mc.DynamicLabelsKeys()...)
 	labels = append(labels, mc.InheritLabels...)
-	fmt.Println("labels: ", labels)
 	return prometheus.NewDesc(
 		mc.PrometheusName, mc.Help, labels, mc.ConstantLabels,
 	)

@@ -24,6 +24,7 @@ func NewJSONObjectExtractor(p Parser) Extractor {
 	return func(topic string, payload []byte, deviceID string) (MetricCollection, error) {
 		var mc MetricCollection
 		parsed := gojsonq.New(gojsonq.SetSeparator(p.separator)).FromString(string(payload))
+		rawPayload := gojsonq.New(gojsonq.SetSeparator(p.separator)).FromString(string(payload))
 
 		for path := range p.config() {
 			rawValue := parsed.Find(path)
@@ -33,16 +34,25 @@ func NewJSONObjectExtractor(p Parser) Extractor {
 			}
 
 			// Find all valid metric configs
+			// var labels map[string]string
 			for _, config := range p.findMetricConfigs(path, deviceID) {
 				id := metricID(topic, path, deviceID, config.PrometheusName)
 				m, err := p.parseMetric(config, id, rawValue)
 				if err != nil {
-					return nil, fmt.Errorf("failed to parse valid value from '%v' for metric %q: %w", rawValue, config.PrometheusName, err)
+					return nil, fmt.Errorf("failed to parse valid json value from '%v' for metric %q: %w", rawValue, config.PrometheusName, err)
 				}
+				labels, err := p.parseInheritedLabels(config, m, rawPayload)
+				if err != nil {
+					return nil, fmt.Errorf("failed to parse valid json labels from '%v' for metric %q: %w", rawPayload, config.PrometheusName, err)
+				}
+				m.Labels = labels
+				m.LabelsKeys = append(m.LabelsKeys, config.InheritLabels...)
 				m.Topic = topic
 				mc = append(mc, m)
+				fmt.Println("extracted?", m)
 			}
 		}
+		fmt.Println("final mc?", mc)
 		return mc, nil
 	}
 }

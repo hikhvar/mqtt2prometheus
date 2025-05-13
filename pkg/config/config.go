@@ -146,10 +146,11 @@ type MetricConfig struct {
 	ForceMonotonicy    bool                      `yaml:"force_monotonicy"`
 	ConstantLabels     map[string]string         `yaml:"const_labels"`
 	DynamicLabels      map[string]string         `yaml:"dynamic_labels"`
+	InheritLabels      []string                  `yaml:"inherit_labels"`
 	StringValueMapping *StringValueMappingConfig `yaml:"string_value_mapping"`
 	MQTTValueScale     float64                   `yaml:"mqtt_value_scale"`
 	// ErrorValue is used while error during value parsing
-	ErrorValue         *float64                  `yaml:"error_value"`
+	ErrorValue *float64 `yaml:"error_value"`
 }
 
 // StringValueMappingConfig defines the mapping from string to float
@@ -162,6 +163,8 @@ type StringValueMappingConfig struct {
 
 func (mc *MetricConfig) PrometheusDescription() *prometheus.Desc {
 	labels := append([]string{"sensor", "topic"}, mc.DynamicLabelsKeys()...)
+	labels = append(labels, mc.InheritLabels...)
+	fmt.Println("labels: ", labels)
 	return prometheus.NewDesc(
 		mc.PrometheusName, mc.Help, labels, mc.ConstantLabels,
 	)
@@ -257,7 +260,7 @@ func LoadConfig(configFile string, logger *zap.Logger) (Config, error) {
 			logger.Warn("string_value_mapping.error_value is deprecated: please use error_value at the metric level.", zap.String("prometheusName", m.PrometheusName), zap.String("MQTTName", m.MQTTName))
 		}
 
-		if m.Expression != "" && m.RawExpression != ""  {
+		if m.Expression != "" && m.RawExpression != "" {
 			return Config{}, fmt.Errorf("metric %s/%s: expression and raw_expression are mutually exclusive.", m.MQTTName, m.PrometheusName)
 		}
 	}

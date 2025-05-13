@@ -49,10 +49,8 @@ func NewJSONObjectExtractor(p Parser) Extractor {
 				m.LabelsKeys = append(m.LabelsKeys, config.InheritLabels...)
 				m.Topic = topic
 				mc = append(mc, m)
-				fmt.Println("extracted?", m)
 			}
 		}
-		fmt.Println("final mc?", mc)
 		return mc, nil
 	}
 }

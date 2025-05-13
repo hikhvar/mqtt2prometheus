@@ -1,5 +1,9 @@
 FROM golang:1.23 as builder
 
+ENV CGO_ENABLED=1
+ENV GOOS=linux
+ENV GOARCH=amd64
+
 COPY . /build/mqtt2prometheus
 WORKDIR /build/mqtt2prometheus
 RUN make static_build TARGET_FILE=/bin/mqtt2prometheus

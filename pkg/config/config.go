@@ -149,8 +149,7 @@ type MetricConfig struct {
 	InheritLabels      []string                  `yaml:"inherit_labels"`
 	StringValueMapping *StringValueMappingConfig `yaml:"string_value_mapping"`
 	MQTTValueScale     float64                   `yaml:"mqtt_value_scale"`
-	// ErrorValue is used while error during value parsing
-	ErrorValue *float64 `yaml:"error_value"`
+	ErrorValue         *float64                  `yaml:"error_value"` // ErrorValue is used while error during value parsing
 }
 
 // StringValueMappingConfig defines the mapping from string to float

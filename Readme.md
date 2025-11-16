@@ -375,7 +375,7 @@ During the evaluation, the following variables are available to the expression:
 * `last_result` - the result from the previous expression evaluation (a float for `raw_expression`/`expression`, a string for `dynamic_labels`)
 * `elapsed` - the time that passed since the previous evaluation, as a [Duration](https://pkg.go.dev/time#Duration) value
 
-The [language definition](https://expr-lang.org/docs/v1.9/Language-Definition) describes the expression syntax. In addition, the following functions are available:
+The [language definition](https://expr-lang.org/docs/language-definition) describes the expression syntax. In addition, the following functions are available:
 * `now()` - the current time as a [Time](https://pkg.go.dev/time#Time) value
 * `int(x)` - convert `x` to an integer value
 * `float(x)` - convert `x` to a floating point value
@@ -399,6 +399,14 @@ If `raw_expression` is set, the generated value of the expression is exported to
 1. If an `expression` is configured, it is evaluated using the converted number. The result of the evaluation replaces the converted sensor value.
 1. If `force_monotonicy` is set to `true`, any new value that is smaller than the previous one is considered to be a counter reset. When a reset is detected, the previous value becomes the value offset which is automatically added to each consecutive value. The offset is persistet between restarts of mqtt2prometheus.
 1. If `mqtt_value_scale` is set to a non-zero value, it is applied to the the value to yield the final metric value.
+
+#### Expressions in docker environment
+
+With expressions enabled the exporter will persist the conversion into /var/lib/mqtt2prometheus. This directory needs to be writable for the user. One solution is to use `--tmpfs /var/lib/mqtt2prometheus:uid=65532,gid=65532,mode=700` in your docker command or to add to docker-compose.yml 
+```
+tmpfs:
+  - /var/lib/mqtt2prometheus:uid=65532,gid=65532,mode=0700
+```
 
 ## Frequently Asked Questions
 

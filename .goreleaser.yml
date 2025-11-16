@@ -84,7 +84,7 @@ nfpms:
         dst: /etc/mqtt2prometheus/config.yaml
         type: config
       - src: ./systemd/mqtt2prometheus.service
-        dst: /etc/systemd/system/mqtt2prometheus.service
+        dst: /usr/lib/systemd/system/mqtt2prometheus.service
         type: config
       - src: ./systemd/mqtt2prometheus
         dst: /etc/default/mqtt2prometheus

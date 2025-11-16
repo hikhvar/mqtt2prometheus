@@ -1,0 +1,36 @@
+# Qingping Air Monitor Lite
+# https://developer.qingping.co/private/communication-protocols/public-mqtt-json
+
+mqtt:
+  server: tcp://127.0.0.1:1883
+  user: bob
+  password: happylittleclouds
+  topic_path: qingping/+/up
+  device_id_regex: "/(?P<deviceid>.+)/up$"
+  qos: 0
+cache:
+  timeout: 24h
+json_parsing:
+  separator: .
+metrics:
+  - prom_name: qp_timestamp
+    mqtt_name: 'sensorData.[0].timestamp.value'
+    type: gauge
+  - prom_name: qp_temperature
+    mqtt_name: 'sensorData.[0].temperature.value'
+    type: gauge
+  - prom_name: qp_humidity
+    mqtt_name: 'sensorData.[0].humidity.value'
+    type: gauge
+  - prom_name: qp_co2
+    mqtt_name: 'sensorData.[0].co2.value'
+    type: gauge
+  - prom_name: qp_pm25
+    mqtt_name: 'sensorData.[0].pm25.value'
+    type: gauge
+  - prom_name: qp_pm10
+    mqtt_name: 'sensorData.[0].pm10.value'
+    type: gauge
+  - prom_name: qp_battery
+    mqtt_name: 'sensorData.[0].battery.value'
+    type: gauge

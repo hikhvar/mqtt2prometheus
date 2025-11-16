@@ -3,7 +3,7 @@ module github.com/hikhvar/mqtt2prometheus
 go 1.18
 
 require (
-	github.com/eclipse/paho.mqtt.golang v1.3.5
+	github.com/eclipse/paho.mqtt.golang v1.5.1
 	github.com/expr-lang/expr v1.16.9
 	github.com/go-kit/kit v0.10.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible

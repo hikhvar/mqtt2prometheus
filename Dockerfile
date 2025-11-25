@@ -1,4 +1,10 @@
-FROM golang:1.23 as builder
+FROM golang:1.24 AS builder
+
+# enable cross-platform builds with CGO_ENABLED
+# I had to first compile without buildx for buildx to then work
+ENV CGO_ENABLED=1
+ENV GOOS=linux
+ENV GOARCH=amd64
 
 COPY . /build/mqtt2prometheus
 WORKDIR /build/mqtt2prometheus

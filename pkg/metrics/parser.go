@@ -12,6 +12,7 @@ import (
 	"github.com/expr-lang/expr"
 	"github.com/expr-lang/expr/vm"
 	"github.com/hikhvar/mqtt2prometheus/pkg/config"
+	"github.com/thedevsaddam/gojsonq/v2"
 	"gopkg.in/yaml.v2"
 )
 
@@ -178,6 +179,30 @@ func (p *Parser) findMetricConfigs(metric string, deviceID string) []*config.Met
 	return configs
 }
 
+// parseInheritedLabels parses the given JSON data and extracts the listed labels
+// to append them to the Prometheus Metric
+// this function returns a map of labels
+func (p *Parser) parseInheritedLabels(cfg *config.MetricConfig, m Metric, payloadJson *gojsonq.JSONQ) (map[string]string, error) {
+
+	// includes already-defined labels that are provided by parseMetric()
+	labels := m.Labels
+
+	// inherit labels
+	if len(cfg.InheritLabels) > 0 {
+		var jsonCopy *gojsonq.JSONQ
+		for _, v := range cfg.InheritLabels {
+			jsonCopy = payloadJson.Copy()
+			result, err := jsonCopy.From(v).GetR()
+			if err != nil {
+				return labels, fmt.Errorf("failed to parse labels from '%v' for label %q: %w", jsonCopy, v, err)
+			}
+			this_label, _ := result.String()
+			labels[v] = this_label
+		}
+	}
+	return labels, nil
+}
+
 // parseMetric parses the given value according to the given deviceID and metricPath. The config allows to
 // parse a metric value according to the device ID.
 func (p *Parser) parseMetric(cfg *config.MetricConfig, metricID string, value interface{}) (Metric, error) {
@@ -209,7 +234,7 @@ func (p *Parser) parseMetric(cfg *config.MetricConfig, metricID string, value in
 				if ok {
 					metricValue = floatValue
 
-				// deprecated, replaced by ErrorValue from the upper level
+					// deprecated, replaced by ErrorValue from the upper level
 				} else if cfg.StringValueMapping.ErrorValue != nil {
 					metricValue = *cfg.StringValueMapping.ErrorValue
 				} else if cfg.ErrorValue != nil {
@@ -272,8 +297,13 @@ func (p *Parser) parseMetric(cfg *config.MetricConfig, metricID string, value in
 		ingestTime = now()
 	}
 
-	// generate dynamic labels
+	// build labels
 	var labels map[string]string
+	if len(cfg.DynamicLabels) > 0 || len(cfg.InheritLabels) > 0 {
+		labels = make(map[string]string, len(cfg.DynamicLabels)+len(cfg.InheritLabels))
+	}
+
+	// generate dynamic labels
 	if len(cfg.DynamicLabels) > 0 {
 		labels = make(map[string]string, len(cfg.DynamicLabels))
 		for k, v := range cfg.DynamicLabels {

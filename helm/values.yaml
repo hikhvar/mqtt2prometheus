@@ -201,7 +201,7 @@ config:
   # Export internal profiling metrics including CPU, Memory, uptime, open file
   # descriptors, as well as metrics exported by Go runtime such as information about
   # heap and garbage collection stats.
-  enable_profiling_metrics: false
+  #enable_profiling_metrics: false
   cache:
     # Timeout. Each received metric will be presented for this time if no update is send via MQTT.
     # Set the timeout to -1 to disable the deletion of metrics from the cache. The exporter presents the ingest timestamp

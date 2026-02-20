@@ -46,6 +46,8 @@ metrics:
     # A map of string to string for constant labels. This labels will be attached to every prometheus metric
     const_labels:
       sensor_type: dht22
+    inherit_labels:
+      - serialNumber
     # The name of the metric in prometheus
   - prom_name: humidity
     # The name of the metric in a MQTT JSON message

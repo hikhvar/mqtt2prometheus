@@ -35,9 +35,10 @@ func TestParser_parseMetric(t *testing.T) {
 		metricConfigs map[string][]*config.MetricConfig
 	}
 	type args struct {
-		metricPath string
-		deviceID   string
-		value      interface{}
+		metricPath  string
+		deviceID    string
+		value       interface{}
+		jsonPayload map[string]interface{}
 	}
 
 	var errorValue float64 = 42.44
@@ -721,6 +722,60 @@ func TestParser_parseMetric(t *testing.T) {
 				Value:       42.44,
 			},
 		},
+		{
+			name: "dynamic label from payload field",
+			fields: fields{
+				map[string][]*config.MetricConfig{
+					"temperature": {
+						{
+							PrometheusName: "temperature",
+							ValueType:      "gauge",
+							OmitTimestamp:  true,
+							DynamicLabels:  map[string]string{"unit": `string(payload["unit"])`},
+						},
+					},
+				},
+			},
+			args: args{
+				metricPath:  "temperature",
+				deviceID:    "dht22",
+				value:       22.5,
+				jsonPayload: map[string]interface{}{"temperature": 22.5, "unit": "celsius"},
+			},
+			want: Metric{
+				Description: prometheus.NewDesc("temperature", "", []string{"sensor", "topic", "unit"}, nil),
+				ValueType:   prometheus.GaugeValue,
+				Value:       22.5,
+				Labels:      map[string]string{"unit": "celsius"},
+				LabelsKeys:  []string{"unit"},
+			},
+		},
+		{
+			name: "raw expression reads sibling payload field",
+			fields: fields{
+				map[string][]*config.MetricConfig{
+					"humidity": {
+						{
+							PrometheusName: "humidity",
+							ValueType:      "gauge",
+							OmitTimestamp:  true,
+							RawExpression:  `float(payload["humidity"])`,
+						},
+					},
+				},
+			},
+			args: args{
+				metricPath:  "humidity",
+				deviceID:    "dht22",
+				value:       nil,
+				jsonPayload: map[string]interface{}{"temperature": 22.5, "humidity": 55.0},
+			},
+			want: Metric{
+				Description: prometheus.NewDesc("humidity", "", []string{"sensor", "topic"}, nil),
+				ValueType:   prometheus.GaugeValue,
+				Value:       55.0,
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -741,7 +796,7 @@ func TestParser_parseMetric(t *testing.T) {
 			config := configs[0]
 
 			id := metricID("", tt.args.metricPath, tt.args.deviceID, config.PrometheusName)
-			got, err := p.parseMetric(config, id, tt.args.value)
+			got, err := p.parseMetric(config, id, tt.args.value, tt.args.jsonPayload)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("parseMetric() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -851,7 +906,7 @@ func TestParser_evalExpression(t *testing.T) {
 
 			p := NewParser(nil, ".", stateDir)
 			for i, value := range tt.values {
-				got, err := p.evalExpressionValue(id, tt.expression, value, value)
+				got, err := p.evalExpressionValue(id, tt.expression, value, value, nil)
 				want := tt.results[i]
 				if err != nil {
 					t.Errorf("evaluating the %dth value '%v' failed: %v", i, value, err)

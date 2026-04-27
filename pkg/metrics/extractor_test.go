@@ -129,12 +129,44 @@ func TestNewJSONObjectExtractor_parseMetric(t *testing.T) {
 			want:    Metric{},
 			noValue: true,
 		},
+		{
+			name:      "dynamic label accesses payload field",
+			separator: ".",
+			fields: fields{
+				map[string][]*config.MetricConfig{
+					"temperature": {
+						{
+							PrometheusName: "temperature",
+							MQTTName:       "temperature",
+							ValueType:      "gauge",
+							DynamicLabels:  map[string]string{"unit": `string(payload["unit"])`},
+						},
+					},
+				},
+			},
+			args: args{
+				metricPath: "topic",
+				deviceID:   "dht22",
+				value:      `{"temperature": 21.0, "unit": "celsius"}`,
+			},
+			want: Metric{
+				Description: prometheus.NewDesc("temperature", "", []string{"sensor", "topic", "unit"}, nil),
+				ValueType:   prometheus.GaugeValue,
+				Value:       21.0,
+				IngestTime:  testNow(),
+				Topic:       "topic",
+				Labels:      map[string]string{"unit": "celsius"},
+				LabelsKeys:  []string{"unit"},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			p := Parser{
 				separator:     tt.separator,
 				metricConfigs: tt.fields.metricConfigs,
+				stateDir:      t.TempDir(),
+				states:        make(map[string]*metricState),
 			}
 			extractor := NewJSONObjectExtractor(p)
 

@@ -354,9 +354,13 @@ Expression is a peace of code that is run dynamically for calculate metric value
 
 #### Metric value
 Metric values can be derived from sensor inputs using complex expressions. Set the metric config option `raw_expression` or `expression` to the desired formular to calculate the result from the input. `raw_expression` and `expression` are mutually exclusives:
-* `raw_expression` is run without raw value conversion. It's `raw_expression` duty to handle the conversion. Only `raw_value` is set while `value` is always set to 0.0. Here is an example which convert datetime (format `HYYMMDDhhmmss`) to unix timestamp:
+* `raw_expression` is run without raw value conversion. It's `raw_expression` duty to handle the conversion. Only `raw_value` is set while `value` is always set to 0.0. The full `payload` map is also available. Here is an example which converts a datetime (format `HYYMMDDhhmmss`) to a unix timestamp:
 ```yaml
 raw_expression: 'date(string(raw_value), "H060102150405", "Europe/Paris").Unix()'
+```
+You can also use `payload` to pull a sibling field directly:
+```yaml
+raw_expression: 'float(payload["humidity"])'
 ```
 * `expression` is run after raw value conversion. If conversion fails, `expression` is not run. Here's an example which integrates all positive values over time:
 ```yaml
@@ -365,7 +369,17 @@ expression: "value > 0 ? last_result + value * elapsed.Seconds() : last_result"
 
 #### Dynamic labels
 Dynamic labels are derivated from sensor inputs using complex expressions. Define labels and the corresponding expression in the metric config otpion `dynamic_labels`.
-`raw_value` and `value` are both set in this context. The value returned from dynamic labels expression is not typed and will be converted to string before being exported.
+`raw_value`, `value`, and `payload` are all set in this context. The value returned from dynamic labels expression is not typed and will be converted to string before being exported.
+
+For example, if a sensor publishes `{"temperature": 21.0, "unit": "celsius"}` you can promote `unit` to a prometheus label:
+```yaml
+- prom_name: temperature
+  mqtt_name: temperature
+  type: gauge
+  dynamic_labels:
+    unit: 'string(payload["unit"])'
+```
+This produces `temperature{sensor="...",topic="...",unit="celsius"} 21.0`.
 
 #### Expression
 During the evaluation, the following variables are available to the expression:
@@ -374,6 +388,7 @@ During the evaluation, the following variables are available to the expression:
 * `last_value` - the `value` during the previous expression evaluation
 * `last_result` - the result from the previous expression evaluation (a float for `raw_expression`/`expression`, a string for `dynamic_labels`)
 * `elapsed` - the time that passed since the previous evaluation, as a [Duration](https://pkg.go.dev/time#Duration) value
+* `payload` - the full MQTT JSON payload as a `map[string]interface{}`, allowing access to sibling fields not targeted by `mqtt_name`
 
 The [language definition](https://expr-lang.org/docs/language-definition) describes the expression syntax. In addition, the following functions are available:
 * `now()` - the current time as a [Time](https://pkg.go.dev/time#Time) value

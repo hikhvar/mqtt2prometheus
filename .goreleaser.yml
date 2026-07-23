@@ -45,6 +45,12 @@ builds:
   gomips:
     - hardfloat
     - softfloat
+
+  # windows/arm is not supported by the Go toolchain.
+  # windows/arm64 is still supported and continues to be built.
+  ignore:
+    - goos: windows
+      goarch: arm
 archives:
 - name_template: >-
       {{- .ProjectName }}_

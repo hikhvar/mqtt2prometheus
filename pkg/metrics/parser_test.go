@@ -1,7 +1,6 @@
 package metrics
 
 import (
-	"os"
 	"reflect"
 	"testing"
 	"time"
@@ -24,11 +23,7 @@ func testNow() time.Time {
 }
 
 func TestParser_parseMetric(t *testing.T) {
-	stateDir, err := os.MkdirTemp("", "parser_test")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer os.RemoveAll(stateDir)
+	stateDir := t.TempDir()
 
 	now = testNow
 	type fields struct {
@@ -37,10 +32,10 @@ func TestParser_parseMetric(t *testing.T) {
 	type args struct {
 		metricPath string
 		deviceID   string
-		value      interface{}
+		value      any
 	}
 
-	var errorValue float64 = 42.44
+	var errorValue = 42.44
 
 	tests := []struct {
 		name      string
@@ -392,7 +387,7 @@ func TestParser_parseMetric(t *testing.T) {
 						{
 							PrometheusName: "enabled",
 							ValueType:      "gauge",
-							ErrorValue: floatP(12333),
+							ErrorValue:     floatP(12333),
 							StringValueMapping: &config.StringValueMappingConfig{
 								Map: map[string]float64{
 									"foo": 112,
@@ -449,7 +444,7 @@ func TestParser_parseMetric(t *testing.T) {
 						{
 							PrometheusName: "enabled",
 							ValueType:      "gauge",
-							ErrorValue: floatP(12333),
+							ErrorValue:     floatP(12333),
 							StringValueMapping: &config.StringValueMappingConfig{
 								Map: map[string]float64{
 									"foo": 112,
@@ -705,7 +700,7 @@ func TestParser_parseMetric(t *testing.T) {
 							ValueType:      "gauge",
 							OmitTimestamp:  true,
 							RawExpression:  `float(join(filter(split(string(raw_value), ""), { # matches "^[0-9\\.]$" }), ""))`,
-					},
+						},
 					},
 				},
 			},
@@ -842,11 +837,7 @@ func TestParser_evalExpression(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.expression, func(t *testing.T) {
-			stateDir, err := os.MkdirTemp("", "parser_test")
-			if err != nil {
-				t.Fatal(err)
-			}
-			defer os.RemoveAll(stateDir)
+			stateDir := t.TempDir()
 			defer func() { testNowElapsed = time.Duration(0) }()
 
 			p := NewParser(nil, ".", stateDir)

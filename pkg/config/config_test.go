@@ -119,7 +119,7 @@ func TestRegexp_MarshalYAML(t *testing.T) {
 	tests := []struct {
 		name    string
 		regex   *Regexp
-		want    interface{}
+		want    any
 		wantErr bool
 	}{
 		{

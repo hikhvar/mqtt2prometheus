@@ -57,7 +57,7 @@ func NewMetricPerTopicExtractor(p Parser, metricNameRegex *config.Regexp) Extrac
 
 		// Find all valid metric configs
 		for _, config := range p.findMetricConfigs(metricName, deviceID) {
-			var rawValue interface{}
+			var rawValue any
 			if config.PayloadField != "" {
 				parsed := gojsonq.New(gojsonq.SetSeparator(p.separator)).FromString(string(payload))
 				rawValue = parsed.Find(config.PayloadField)

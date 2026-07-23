@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"time"
@@ -95,7 +94,7 @@ func main() {
 		if mqtt_password == "" {
 			logger.Fatal("MQTT2PROM_MQTT_PASSWORD is required")
 		}
-		secret, err := ioutil.ReadFile(mqtt_password)
+		secret, err := os.ReadFile(mqtt_password)
 		if err != nil {
 			logger.Fatal("unable to read mqtt password from secret file", zap.Error(err))
 		}
@@ -252,7 +251,7 @@ func setupExtractor(cfg config.Config) (metrics.Extractor, error) {
 func newTLSConfig(cfg config.Config) (*tls.Config, error) {
 	certpool := x509.NewCertPool()
 	if cfg.MQTT.CACert != "" {
-		pemCerts, err := ioutil.ReadFile(cfg.MQTT.CACert)
+		pemCerts, err := os.ReadFile(cfg.MQTT.CACert)
 		if err != nil {
 			return nil, fmt.Errorf("failed to load ca_cert file: %w", err)
 		}

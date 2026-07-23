@@ -2,7 +2,6 @@ package metrics
 
 import (
 	"fmt"
-	"io"
 	"math"
 	"os"
 	"strconv"
@@ -24,7 +23,7 @@ type dynamicState struct {
 	// Last value that was used for evaluating the given expression
 	LastExprValue float64 `yaml:"last_expr_value"`
 	// Last result returned from evaluating the given expression
-	LastExprRawValue interface{} `yaml:"last_expr_raw_value"`
+	LastExprRawValue any `yaml:"last_expr_raw_value"`
 	// Last result returned from evaluating the given expression
 	LastExprResult float64 `yaml:"last_expr_result"`
 	// Last result (String) returned from evaluating the given expression
@@ -41,7 +40,7 @@ type metricState struct {
 	// Compiled evaluation expression
 	program *vm.Program
 	// Environment in which the expression is evaluated
-	env map[string]interface{}
+	env map[string]any
 }
 
 type Parser struct {
@@ -76,7 +75,7 @@ const (
 
 var now = time.Now
 
-func toInt64(i interface{}) int64 {
+func toInt64(i any) int64 {
 	switch v := i.(type) {
 	case float32:
 		return int64(v)
@@ -101,7 +100,7 @@ func toInt64(i interface{}) int64 {
 	}
 }
 
-func toFloat64(i interface{}) float64 {
+func toFloat64(i any) float64 {
 	switch v := i.(type) {
 	case float32:
 		return float64(v)
@@ -127,8 +126,8 @@ func toFloat64(i interface{}) float64 {
 }
 
 // defaultExprEnv returns the default environment for expression evaluation.
-func defaultExprEnv() map[string]interface{} {
-	return map[string]interface{}{
+func defaultExprEnv() map[string]any {
+	return map[string]any{
 		// Variables
 		env_raw_value:   nil,
 		env_value:       0.0,
@@ -180,7 +179,7 @@ func (p *Parser) findMetricConfigs(metric string, deviceID string) []*config.Met
 
 // parseMetric parses the given value according to the given deviceID and metricPath. The config allows to
 // parse a metric value according to the device ID.
-func (p *Parser) parseMetric(cfg *config.MetricConfig, metricID string, value interface{}) (Metric, error) {
+func (p *Parser) parseMetric(cfg *config.MetricConfig, metricID string, value any) (Metric, error) {
 	var metricValue float64
 	var err error
 
@@ -209,7 +208,7 @@ func (p *Parser) parseMetric(cfg *config.MetricConfig, metricID string, value in
 				if ok {
 					metricValue = floatValue
 
-				// deprecated, replaced by ErrorValue from the upper level
+					// deprecated, replaced by ErrorValue from the upper level
 				} else if cfg.StringValueMapping.ErrorValue != nil {
 					metricValue = *cfg.StringValueMapping.ErrorValue
 				} else if cfg.ErrorValue != nil {
@@ -303,22 +302,14 @@ func (p *Parser) stateFileName(metricID string) string {
 // If the file does not exist, an empty state is returned.
 func (p *Parser) readMetricState(metricID string) (*metricState, error) {
 	state := &metricState{}
-	f, err := os.Open(p.stateFileName(metricID))
+	stateFile := p.stateFileName(metricID)
+	data, err := os.ReadFile(stateFile)
 	if err != nil {
 		// The file does not exist for new metrics.
 		if os.IsNotExist(err) {
 			return state, nil
 		}
-		return state, fmt.Errorf("failed to read file %q: %v", f.Name(), err)
-	}
-	defer f.Close()
-
-	var data []byte
-	if info, err := f.Stat(); err == nil {
-		data = make([]byte, int(info.Size()))
-	}
-	if _, err := f.Read(data); err != nil && err != io.EOF {
-		return state, err
+		return state, fmt.Errorf("failed to read file %q: %w", stateFile, err)
 	}
 
 	err = yaml.UnmarshalStrict(data, &state.dynamic)
@@ -332,13 +323,9 @@ func (p *Parser) writeMetricState(metricID string, state *metricState) error {
 	if err != nil {
 		return err
 	}
-	f, err := os.OpenFile(p.stateFileName(metricID), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-	if _, err = f.Write(out); err != nil {
-		return fmt.Errorf("failed to write file %q: %v", f.Name(), err)
+	stateFile := p.stateFileName(metricID)
+	if err := os.WriteFile(stateFile, out, 0644); err != nil {
+		return fmt.Errorf("failed to write file %q: %w", stateFile, err)
 	}
 	return nil
 }
@@ -383,7 +370,7 @@ func (p *Parser) enforceMonotonicy(metricID string, value float64) (float64, err
 
 // evalExpressionValue runs the given code in the metric's environment and returns the result.
 // In case of an error, the original value is returned.
-func (p *Parser) evalExpressionValue(metricID, code string, raw_value interface{}, value float64) (float64, error) {
+func (p *Parser) evalExpressionValue(metricID, code string, raw_value any, value float64) (float64, error) {
 	ms, err := p.getMetricState(metricID)
 	if err != nil {
 		return value, err
@@ -428,7 +415,7 @@ func (p *Parser) evalExpressionValue(metricID, code string, raw_value interface{
 
 // evalExpressionLabel runs the given code in the metric's environment and returns the result.
 // In case of an error, the original value is returned.
-func (p *Parser) evalExpressionLabel(metricID, label, code string, rawValue interface{}, value float64) (string, error) {
+func (p *Parser) evalExpressionLabel(metricID, label, code string, rawValue any, value float64) (string, error) {
 	ms, err := p.getMetricState(label + "@" + metricID)
 	if err != nil {
 		return "", err

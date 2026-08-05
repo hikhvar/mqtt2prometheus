@@ -1,6 +1,6 @@
 [Unit]
 Description=Simple translator from mqtt messages to prometheus. Analog to pushgateway
-Documentation=https://github.com/hikhvar/mqtt2prometheus
+Documentation=https://github.com/janezpodhostnik/mqtt2prometheus
 After=network.target
 Before=prometheus.service
 

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/hikhvar/mqtt2prometheus/pkg/config"
+	"github.com/janezpodhostnik/mqtt2prometheus/pkg/config"
 	gojsonq "github.com/thedevsaddam/gojsonq/v2"
 )
 

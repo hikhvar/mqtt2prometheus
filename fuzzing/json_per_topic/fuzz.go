@@ -3,8 +3,8 @@
 package json
 
 import (
-	"github.com/hikhvar/mqtt2prometheus/pkg/config"
-	"github.com/hikhvar/mqtt2prometheus/pkg/metrics"
+	"github.com/janezpodhostnik/mqtt2prometheus/pkg/config"
+	"github.com/janezpodhostnik/mqtt2prometheus/pkg/metrics"
 )
 
 func Fuzz(data []byte) int {

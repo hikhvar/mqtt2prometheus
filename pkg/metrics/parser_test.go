@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hikhvar/mqtt2prometheus/pkg/config"
+	"github.com/janezpodhostnik/mqtt2prometheus/pkg/config"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -387,7 +387,7 @@ func TestParser_parseMetric(t *testing.T) {
 						{
 							PrometheusName: "enabled",
 							ValueType:      "gauge",
-							ErrorValue:     floatP(12333),
+							ErrorValue:     new(float64(12333)),
 							StringValueMapping: &config.StringValueMappingConfig{
 								Map: map[string]float64{
 									"foo": 112,
@@ -444,7 +444,7 @@ func TestParser_parseMetric(t *testing.T) {
 						{
 							PrometheusName: "enabled",
 							ValueType:      "gauge",
-							ErrorValue:     floatP(12333),
+							ErrorValue:     new(float64(12333)),
 							StringValueMapping: &config.StringValueMappingConfig{
 								Map: map[string]float64{
 									"foo": 112,
@@ -752,10 +752,6 @@ func TestParser_parseMetric(t *testing.T) {
 			}
 		})
 	}
-}
-
-func floatP(f float64) *float64 {
-	return &f
 }
 
 func TestParser_evalExpression(t *testing.T) {

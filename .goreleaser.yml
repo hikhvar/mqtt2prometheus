@@ -63,7 +63,7 @@ archives:
 checksum:
   name_template: 'checksums.txt'
 snapshot:
-  name_template: "{{ .Tag }}-next"
+  version_template: "{{ .Tag }}-next"
 changelog:
   sort: asc
   filters:
@@ -74,8 +74,9 @@ changelog:
 
 nfpms:
   - id: default
-    vendor: Christoph Petrausch
-    homepage: https://github.com/hikhvar/mqtt2prometheus
+    vendor: Janez Podhostnik
+    maintainer: Janez Podhostnik <janez.podhostnik@ourplace.is>
+    homepage: https://github.com/janezpodhostnik/mqtt2prometheus
     description: This exporter translates from MQTT topics to prometheus metrics.
     license: MIT License
     formats:
@@ -107,10 +108,8 @@ dockers:
     build_flag_templates:
       - "--platform=linux/amd64"
     image_templates:
-      - "hikhvar/mqtt2prometheus:{{ .Tag }}-amd64"
-      - "hikhvar/mqtt2prometheus:latest-amd64"
-      - "ghcr.io/hikhvar/mqtt2prometheus:{{ .Tag }}-amd64"
-      - "ghcr.io/hikhvar/mqtt2prometheus:latest-amd64"
+      - "ghcr.io/{{ .Env.GITHUB_REPOSITORY }}:{{ .Tag }}-amd64"
+      - "ghcr.io/{{ .Env.GITHUB_REPOSITORY }}:latest-amd64"
 
   - dockerfile: release/Dockerfile.scratch
     goos: linux
@@ -119,10 +118,8 @@ dockers:
     build_flag_templates:
       - "--platform=linux/arm64"
     image_templates:
-      - "hikhvar/mqtt2prometheus:{{ .Tag }}-arm64"
-      - "hikhvar/mqtt2prometheus:latest-arm64"
-      - "ghcr.io/hikhvar/mqtt2prometheus:{{ .Tag }}-arm64"
-      - "ghcr.io/hikhvar/mqtt2prometheus:latest-arm64"
+      - "ghcr.io/{{ .Env.GITHUB_REPOSITORY }}:{{ .Tag }}-arm64"
+      - "ghcr.io/{{ .Env.GITHUB_REPOSITORY }}:latest-arm64"
 
 
   - dockerfile: release/Dockerfile.scratch
@@ -133,10 +130,8 @@ dockers:
     build_flag_templates:
       - "--platform=linux/arm/v6"
     image_templates:
-      - "hikhvar/mqtt2prometheus:{{ .Tag }}-arm6"
-      - "hikhvar/mqtt2prometheus:latest-arm6"
-      - "ghcr.io/hikhvar/mqtt2prometheus:{{ .Tag }}-arm6"
-      - "ghcr.io/hikhvar/mqtt2prometheus:latest-arm6"
+      - "ghcr.io/{{ .Env.GITHUB_REPOSITORY }}:{{ .Tag }}-arm6"
+      - "ghcr.io/{{ .Env.GITHUB_REPOSITORY }}:latest-arm6"
 
   - dockerfile: release/Dockerfile.scratch
     goos: linux
@@ -146,10 +141,8 @@ dockers:
     build_flag_templates:
       - "--platform=linux/arm/v7"
     image_templates:
-      - "hikhvar/mqtt2prometheus:{{ .Tag }}-arm7"
-      - "hikhvar/mqtt2prometheus:latest-arm7"
-      - "ghcr.io/hikhvar/mqtt2prometheus:{{ .Tag }}-arm7"
-      - "ghcr.io/hikhvar/mqtt2prometheus:latest-arm7"
+      - "ghcr.io/{{ .Env.GITHUB_REPOSITORY }}:{{ .Tag }}-arm7"
+      - "ghcr.io/{{ .Env.GITHUB_REPOSITORY }}:latest-arm7"
 
   - dockerfile: release/Dockerfile.scratch
     goos: linux
@@ -158,42 +151,22 @@ dockers:
     build_flag_templates:
       - "--platform=linux/386"
     image_templates:
-      - "hikhvar/mqtt2prometheus:{{ .Tag }}-386"
-      - "hikhvar/mqtt2prometheus:latest-386"
-      - "ghcr.io/hikhvar/mqtt2prometheus:{{ .Tag }}-386"
-      - "ghcr.io/hikhvar/mqtt2prometheus:latest-386"
+      - "ghcr.io/{{ .Env.GITHUB_REPOSITORY }}:{{ .Tag }}-386"
+      - "ghcr.io/{{ .Env.GITHUB_REPOSITORY }}:latest-386"
 
 docker_manifests:
-  # Docker Registry
-  - name_template: hikhvar/mqtt2prometheus:{{ .Tag }}
+  - name_template: ghcr.io/{{ .Env.GITHUB_REPOSITORY }}:{{ .Tag }}
     image_templates:
-      - "hikhvar/mqtt2prometheus:{{ .Tag }}-amd64"
-      - "hikhvar/mqtt2prometheus:{{ .Tag }}-arm64"
-      - "hikhvar/mqtt2prometheus:{{ .Tag }}-arm6"
-      - "hikhvar/mqtt2prometheus:{{ .Tag }}-arm7"
-      - "hikhvar/mqtt2prometheus:{{ .Tag }}-386"
+      - "ghcr.io/{{ .Env.GITHUB_REPOSITORY }}:{{ .Tag }}-amd64"
+      - "ghcr.io/{{ .Env.GITHUB_REPOSITORY }}:{{ .Tag }}-arm64"
+      - "ghcr.io/{{ .Env.GITHUB_REPOSITORY }}:{{ .Tag }}-arm6"
+      - "ghcr.io/{{ .Env.GITHUB_REPOSITORY }}:{{ .Tag }}-arm7"
+      - "ghcr.io/{{ .Env.GITHUB_REPOSITORY }}:{{ .Tag }}-386"
 
-  - name_template: hikhvar/mqtt2prometheus:latest
+  - name_template: ghcr.io/{{ .Env.GITHUB_REPOSITORY }}:latest
     image_templates:
-      - "hikhvar/mqtt2prometheus:latest-amd64"
-      - "hikhvar/mqtt2prometheus:latest-arm64"
-      - "hikhvar/mqtt2prometheus:latest-arm6"
-      - "hikhvar/mqtt2prometheus:latest-arm7"
-      - "hikhvar/mqtt2prometheus:latest-386"
-
-  # Github Registry
-  - name_template: ghcr.io/hikhvar/mqtt2prometheus:{{ .Tag }}
-    image_templates:
-      - "ghcr.io/hikhvar/mqtt2prometheus:{{ .Tag }}-amd64"
-      - "ghcr.io/hikhvar/mqtt2prometheus:{{ .Tag }}-arm64"
-      - "ghcr.io/hikhvar/mqtt2prometheus:{{ .Tag }}-arm6"
-      - "ghcr.io/hikhvar/mqtt2prometheus:{{ .Tag }}-arm7"
-      - "ghcr.io/hikhvar/mqtt2prometheus:{{ .Tag }}-386"
-
-  - name_template: ghcr.io/hikhvar/mqtt2prometheus:latest
-    image_templates:
-      - "ghcr.io/hikhvar/mqtt2prometheus:latest-amd64"
-      - "ghcr.io/hikhvar/mqtt2prometheus:latest-arm64"
-      - "ghcr.io/hikhvar/mqtt2prometheus:latest-arm6"
-      - "ghcr.io/hikhvar/mqtt2prometheus:latest-arm7"
-      - "ghcr.io/hikhvar/mqtt2prometheus:latest-386"
+      - "ghcr.io/{{ .Env.GITHUB_REPOSITORY }}:latest-amd64"
+      - "ghcr.io/{{ .Env.GITHUB_REPOSITORY }}:latest-arm64"
+      - "ghcr.io/{{ .Env.GITHUB_REPOSITORY }}:latest-arm6"
+      - "ghcr.io/{{ .Env.GITHUB_REPOSITORY }}:latest-arm7"
+      - "ghcr.io/{{ .Env.GITHUB_REPOSITORY }}:latest-386"

@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/hikhvar/mqtt2prometheus/pkg/config"
+	"github.com/janezpodhostnik/mqtt2prometheus/pkg/config"
 	"github.com/prometheus/client_golang/prometheus"
 )
 

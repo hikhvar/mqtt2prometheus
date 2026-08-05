@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/hikhvar/mqtt2prometheus/pkg/config"
+	"github.com/janezpodhostnik/mqtt2prometheus/pkg/config"
 	gocache "github.com/patrickmn/go-cache"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"

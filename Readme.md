@@ -1,6 +1,10 @@
 # MQTT2Prometheus
-![](https://github.com/hikhvar/mqtt2prometheus/workflows/tests/badge.svg) ![](https://github.com/hikhvar/mqtt2prometheus/workflows/release/badge.svg)
+![](https://github.com/janezpodhostnik/mqtt2prometheus/actions/workflows/tests.yml/badge.svg) ![](https://github.com/janezpodhostnik/mqtt2prometheus/actions/workflows/release.yml/badge.svg)
 
+> **Note:** This is a fork of [hikhvar/mqtt2prometheus](https://github.com/hikhvar/mqtt2prometheus) by Christoph Petrausch —
+> head over there for the original project. I'm cleaning up and updating this fork for my own use, and I'll try to
+> upstream any relevant changes as the original author has time. All credit for the original work goes to the upstream
+> author and contributors.
 
 This exporter translates from MQTT topics to prometheus metrics. The core design is that clients send arbitrary JSON messages
 on the topics. The translation between the MQTT representation and prometheus metrics is configured in the mqtt2prometheus exporter since we often can not change the IoT devices sending
@@ -11,7 +15,7 @@ expose the received messages as prometheus metrics. Currently, the exporter supp
 
 I wrote this exporter to expose metrics from small embedded sensors based on the NodeMCU to prometheus.
 The used arduino sketch can be found in the [dht22tomqtt](https://github.com/hikhvar/dht22tomqtt) repository.
-A local hacking environment with mqtt2prometheus, a MQTT broker and a prometheus server is in the [hack](https://github.com/hikhvar/mqtt2prometheus/tree/master/hack) directory.
+A local hacking environment with mqtt2prometheus, a MQTT broker and a prometheus server is in the [hack](https://github.com/janezpodhostnik/mqtt2prometheus/tree/master/hack) directory.
 
 ## Assumptions about Messages and Topics
 This exporter makes some assumptions about the MQTT topics. This exporter assumes that each
@@ -96,9 +100,9 @@ Only the latest two Go major versions are tested and supported.
 
 To start the public available image run:
 ```bash
-docker run -it -v "$(pwd)/config.yaml:/config.yaml"  -p  9641:9641 ghcr.io/hikhvar/mqtt2prometheus:latest
+docker run -it -v "$(pwd)/config.yaml:/config.yaml"  -p  9641:9641 ghcr.io/janezpodhostnik/mqtt2prometheus:latest
 ```
-Please have a look at the [latest relase](https://github.com/hikhvar/mqtt2prometheus/releases/latest) to get a stable image tag. The latest tag may break at any moment in time since latest is pushed into the registries on every git commit in the master branch.
+Please have a look at the [latest relase](https://github.com/janezpodhostnik/mqtt2prometheus/releases/latest) to get a stable image tag. The latest tag may break at any moment in time since latest is pushed into the registry on every git tag.
 
 #### Build The Image locally
 To build a docker container with the mqtt2prometheus exporter included run:
@@ -326,7 +330,7 @@ Then load that file into the environment before starting the container:
   -e MQTT2PROM_MQTT_PASSWORD \
   -v "$(pwd)/examples/config.yaml:/config.yaml" \
   -p 9641:9641 \
-  ghcr.io/hikhvar/mqtt2prometheus:latest
+  ghcr.io/janezpodhostnik/mqtt2prometheus:latest
 ```
 
 #### Example use with Docker secret (in swarm)
@@ -334,7 +338,7 @@ Then load that file into the environment before starting the container:
 Create a docker secret to store the password(`mqtt-credential` in the example below), and pass the optional `treat-mqtt-password-as-file-name` command line argument.
 ```docker
   mqtt_exporter_tasmota:
-    image: ghcr.io/hikhvar/mqtt2prometheus:latest
+    image: ghcr.io/janezpodhostnik/mqtt2prometheus:latest
     secrets:
       - mqtt-credential
     environment:

@@ -5,7 +5,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/eclipse/paho.mqtt.golang"
-	"github.com/hikhvar/mqtt2prometheus/pkg/config"
+	"github.com/janezpodhostnik/mqtt2prometheus/pkg/config"
 )
 
 type Ingest struct {

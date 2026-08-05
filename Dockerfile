@@ -1,4 +1,4 @@
-FROM golang:1.26 as builder
+FROM golang:1.26 AS builder
 
 COPY . /build/mqtt2prometheus
 WORKDIR /build/mqtt2prometheus

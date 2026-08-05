@@ -48,4 +48,4 @@ container:
 	docker build -t mqtt2prometheus:latest .
 
 test_release:
-	goreleaser --rm-dist --skip-validate --skip-publish
+	goreleaser release --snapshot --clean --skip=publish

@@ -10,7 +10,7 @@ import (
 
 	"github.com/expr-lang/expr"
 	"github.com/expr-lang/expr/vm"
-	"github.com/hikhvar/mqtt2prometheus/pkg/config"
+	"github.com/janezpodhostnik/mqtt2prometheus/pkg/config"
 	"gopkg.in/yaml.v2"
 )
 

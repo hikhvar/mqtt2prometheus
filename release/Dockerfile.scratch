@@ -1,4 +1,4 @@
-FROM alpine as donor
+FROM alpine AS donor
 RUN apk add tzdata
 FROM scratch
 COPY mqtt2prometheus /mqtt2prometheus

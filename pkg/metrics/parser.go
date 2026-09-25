@@ -72,6 +72,7 @@ const (
 	env_abs            = "abs"
 	env_min            = "min"
 	env_max            = "max"
+	env_payload        = "payload"
 )
 
 var now = time.Now
@@ -135,6 +136,7 @@ func defaultExprEnv() map[string]interface{} {
 		env_last_value:  0.0,
 		env_last_result: 0.0,
 		env_elapsed:     time.Duration(0),
+		env_payload:     map[string]interface{}{},
 		// Functions
 		env_now:   now,
 		env_int:   toInt64,
@@ -180,12 +182,12 @@ func (p *Parser) findMetricConfigs(metric string, deviceID string) []*config.Met
 
 // parseMetric parses the given value according to the given deviceID and metricPath. The config allows to
 // parse a metric value according to the device ID.
-func (p *Parser) parseMetric(cfg *config.MetricConfig, metricID string, value interface{}) (Metric, error) {
+func (p *Parser) parseMetric(cfg *config.MetricConfig, metricID string, value interface{}, jsonPayload map[string]interface{}) (Metric, error) {
 	var metricValue float64
 	var err error
 
 	if cfg.RawExpression != "" {
-		if metricValue, err = p.evalExpressionValue(metricID, cfg.RawExpression, value, metricValue); err != nil {
+		if metricValue, err = p.evalExpressionValue(metricID, cfg.RawExpression, value, metricValue, jsonPayload); err != nil {
 			if cfg.ErrorValue != nil {
 				metricValue = *cfg.ErrorValue
 			} else {
@@ -243,7 +245,7 @@ func (p *Parser) parseMetric(cfg *config.MetricConfig, metricID string, value in
 		}
 
 		if cfg.Expression != "" {
-			if metricValue, err = p.evalExpressionValue(metricID, cfg.Expression, value, metricValue); err != nil {
+			if metricValue, err = p.evalExpressionValue(metricID, cfg.Expression, value, metricValue, jsonPayload); err != nil {
 				if cfg.ErrorValue != nil {
 					metricValue = *cfg.ErrorValue
 				} else {
@@ -277,7 +279,7 @@ func (p *Parser) parseMetric(cfg *config.MetricConfig, metricID string, value in
 	if len(cfg.DynamicLabels) > 0 {
 		labels = make(map[string]string, len(cfg.DynamicLabels))
 		for k, v := range cfg.DynamicLabels {
-			value, err := p.evalExpressionLabel(metricID, k, v, value, metricValue)
+			value, err := p.evalExpressionLabel(metricID, k, v, value, metricValue, jsonPayload)
 			if err != nil {
 				return Metric{}, err
 			}
@@ -347,6 +349,9 @@ func (p *Parser) writeMetricState(metricID string, state *metricState) error {
 // The state is read from and written back to disk as needed.
 func (p *Parser) getMetricState(metricID string) (*metricState, error) {
 	var err error
+	if p.states == nil {
+		p.states = make(map[string]*metricState)
+	}
 	state, found := p.states[metricID]
 	if !found {
 		if state, err = p.readMetricState(metricID); err != nil {
@@ -383,7 +388,7 @@ func (p *Parser) enforceMonotonicy(metricID string, value float64) (float64, err
 
 // evalExpressionValue runs the given code in the metric's environment and returns the result.
 // In case of an error, the original value is returned.
-func (p *Parser) evalExpressionValue(metricID, code string, raw_value interface{}, value float64) (float64, error) {
+func (p *Parser) evalExpressionValue(metricID, code string, raw_value interface{}, value float64, jsonPayload map[string]interface{}) (float64, error) {
 	ms, err := p.getMetricState(metricID)
 	if err != nil {
 		return value, err
@@ -409,6 +414,7 @@ func (p *Parser) evalExpressionValue(metricID, code string, raw_value interface{
 	} else {
 		ms.env[env_elapsed] = now().Sub(ms.dynamic.LastExprTimestamp)
 	}
+	ms.env[env_payload] = jsonPayload
 
 	result, err := expr.Run(ms.program, ms.env)
 	if err != nil {
@@ -428,7 +434,7 @@ func (p *Parser) evalExpressionValue(metricID, code string, raw_value interface{
 
 // evalExpressionLabel runs the given code in the metric's environment and returns the result.
 // In case of an error, the original value is returned.
-func (p *Parser) evalExpressionLabel(metricID, label, code string, rawValue interface{}, value float64) (string, error) {
+func (p *Parser) evalExpressionLabel(metricID, label, code string, rawValue interface{}, value float64, jsonPayload map[string]interface{}) (string, error) {
 	ms, err := p.getMetricState(label + "@" + metricID)
 	if err != nil {
 		return "", err
@@ -454,6 +460,7 @@ func (p *Parser) evalExpressionLabel(metricID, label, code string, rawValue inte
 	} else {
 		ms.env[env_elapsed] = now().Sub(ms.dynamic.LastExprTimestamp)
 	}
+	ms.env[env_payload] = jsonPayload
 
 	result, err := expr.Run(ms.program, ms.env)
 	if err != nil {

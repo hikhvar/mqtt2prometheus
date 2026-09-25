@@ -1,6 +1,7 @@
 package metrics
 
 import (
+	"encoding/json"
 	"fmt"
 	"regexp"
 
@@ -23,7 +24,11 @@ func metricID(topic, metric, deviceID, promName string) string {
 func NewJSONObjectExtractor(p Parser) Extractor {
 	return func(topic string, payload []byte, deviceID string) (MetricCollection, error) {
 		var mc MetricCollection
-		parsed := gojsonq.New(gojsonq.SetSeparator(p.separator)).FromString(string(payload))
+		var jsonPayload map[string]interface{}
+		if err := json.Unmarshal(payload, &jsonPayload); err != nil {
+			jsonPayload = map[string]interface{}{}
+		}
+		parsed := gojsonq.New(gojsonq.SetSeparator(p.separator)).FromInterface(jsonPayload)
 
 		for path := range p.config() {
 			rawValue := parsed.Find(path)
@@ -35,7 +40,7 @@ func NewJSONObjectExtractor(p Parser) Extractor {
 			// Find all valid metric configs
 			for _, config := range p.findMetricConfigs(path, deviceID) {
 				id := metricID(topic, path, deviceID, config.PrometheusName)
-				m, err := p.parseMetric(config, id, rawValue)
+				m, err := p.parseMetric(config, id, rawValue, jsonPayload)
 				if err != nil {
 					return nil, fmt.Errorf("failed to parse valid value from '%v' for metric %q: %w", rawValue, config.PrometheusName, err)
 				}
@@ -58,6 +63,7 @@ func NewMetricPerTopicExtractor(p Parser, metricNameRegex *config.Regexp) Extrac
 		// Find all valid metric configs
 		for _, config := range p.findMetricConfigs(metricName, deviceID) {
 			var rawValue interface{}
+			var jsonPayload map[string]interface{}
 			if config.PayloadField != "" {
 				parsed := gojsonq.New(gojsonq.SetSeparator(p.separator)).FromString(string(payload))
 				rawValue = parsed.Find(config.PayloadField)
@@ -65,12 +71,16 @@ func NewMetricPerTopicExtractor(p Parser, metricNameRegex *config.Regexp) Extrac
 				if rawValue == nil {
 					return nil, fmt.Errorf("failed to extract field %q from payload %q for metric %q", config.PayloadField, payload, metricName)
 				}
+				if err := json.Unmarshal(payload, &jsonPayload); err != nil {
+					jsonPayload = map[string]interface{}{}
+				}
 			} else {
 				rawValue = string(payload)
+				jsonPayload = map[string]interface{}{}
 			}
 
 			id := metricID(topic, metricName, deviceID, config.PrometheusName)
-			m, err := p.parseMetric(config, id, rawValue)
+			m, err := p.parseMetric(config, id, rawValue, jsonPayload)
 			if err != nil {
 				return nil, fmt.Errorf("failed to parse valid value from '%v' for metric %q: %w", rawValue, config.PrometheusName, err)
 			}
